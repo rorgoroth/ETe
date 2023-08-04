@@ -6459,6 +6459,11 @@ gameMod_t FS_GetGameMod(void)
 				return knownGames[i].gameEnum;
 			}
 		}
+		if (!Q_stricmpn(fs_gamedirvar->string, "etjump", 6))
+		{
+			// etjump but possibly developer build or custom build
+			return GAMEMOD_ETJUMP;
+		}
 		if (!Q_stricmpn(fs_gamedirvar->string, "duke", 4))
 		{
 			// Let's rock
