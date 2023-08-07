@@ -1547,7 +1547,7 @@ typedef struct operator_s
 
 typedef struct value_s
 {
-	int intvalue;
+	signed int intvalue;
 	float floatvalue;
 	int parentheses;
 	struct value_s *prev, *next;
@@ -1614,7 +1614,7 @@ int PC_OperatorPriority( int op ) {
 		op = &operator_heap[numoperators++];}
 #define FreeOperator( op )
 
-int PC_EvaluateTokens( source_t *source, token_t *tokens, int *intvalue,
+int PC_EvaluateTokens( source_t *source, token_t *tokens, signed int *intvalue,
 					   float *floatvalue, int integer ) {
 	operator_t *o, *firstoperator, *lastoperator;
 	value_t *v, *firstvalue, *lastvalue, *v1, *v2;
@@ -2080,7 +2080,7 @@ int PC_EvaluateTokens( source_t *source, token_t *tokens, int *intvalue,
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-int PC_Evaluate( source_t *source, int *intvalue,
+int PC_Evaluate( source_t *source, signed int *intvalue,
 				 float *floatvalue, int integer ) {
 	token_t token, *firsttoken, *lasttoken;
 	token_t *t, *nexttoken;
@@ -2184,7 +2184,7 @@ int PC_Evaluate( source_t *source, int *intvalue,
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-int PC_DollarEvaluate( source_t *source, int *intvalue,
+int PC_DollarEvaluate( source_t *source, signed int *intvalue,
 					   float *floatvalue, int integer ) {
 	int indent, defined = qfalse;
 	token_t token, *firsttoken, *lasttoken;
@@ -2410,7 +2410,7 @@ void UnreadSignToken( source_t *source ) {
 // Changes Globals:		-
 //============================================================================
 int PC_Directive_eval( source_t *source ) {
-	int value;
+	signed int value;
 	token_t token;
 
 	if ( !PC_Evaluate( source, &value, NULL, qtrue ) ) {
@@ -2519,7 +2519,7 @@ int PC_ReadDirective( source_t *source ) {
 // Changes Globals:		-
 //============================================================================
 int PC_DollarDirective_evalint( source_t *source ) {
-	int value;
+	signed int value;
 	token_t token;
 
 	if ( !PC_DollarEvaluate( source, &value, NULL, qtrue ) ) {
@@ -2564,7 +2564,7 @@ int PC_DollarDirective_evalfloat( source_t *source ) {
 	token.type = TT_NUMBER;
 	token.subtype = TT_FLOAT | TT_LONG | TT_DECIMAL;
 #ifdef NUMBERVALUE
-	token.intvalue = (int) value;
+	token.intvalue = (unsigned int) value;
 	token.floatvalue = value;
 #endif //NUMBERVALUE
 	PC_UnreadSourceToken( source, &token );

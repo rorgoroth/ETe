@@ -471,7 +471,7 @@ static int PS_ReadString( script_t *script, token_t *token, int quote ) {
 		  //if escape characters inside a string are allowed
 		if ( *script->script_p == '\\' && !( script->flags & SCFL_NOSTRINGESCAPECHARS ) ) {
 			if ( !PS_ReadEscapeCharacter( script, &token->string[len] ) ) {
-				token->string[len] = 0;
+				token->string[len] = '\0';
 				return 0;
 			} //end if
 			len++;
@@ -505,12 +505,12 @@ static int PS_ReadString( script_t *script, token_t *token, int quote ) {
 		else
 		{
 			if ( *script->script_p == '\0' ) {
-				token->string[len] = 0;
+				token->string[len] = '\0';
 				ScriptError( script, "missing trailing quote" );
 				return 0;
 			} //end if
 			if ( *script->script_p == '\n' ) {
-				token->string[len] = 0;
+				token->string[len] = '\0';
 				ScriptError( script, "newline inside string %s", token->string );
 				return 0;
 			} //end if
@@ -559,7 +559,7 @@ int PS_ReadName( script_t *script, token_t *token ) {
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-void NumberValue( char *string, int subtype, int *intvalue,
+static void NumberValue( char *string, int subtype, unsigned int *intvalue,
 				  float *floatvalue ) {
 	unsigned long int dotfound = 0;
 
@@ -627,7 +627,7 @@ void NumberValue( char *string, int subtype, int *intvalue,
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-int PS_ReadNumber( script_t *script, token_t *token ) {
+static int PS_ReadNumber( script_t *script, token_t *token ) {
 	int len = 0, i;
 	int octal, dot;
 	char c;
@@ -836,7 +836,7 @@ int PS_ReadPrimitive( script_t *script, token_t *token ) {
 		} //end if
 		token->string[len++] = *script->script_p++;
 	} //end while
-	token->string[len] = 0;
+	token->string[len] = '\0';
 	//copy the token into the script structure
 	memcpy( &script->token, token, sizeof( token_t ) );
 	//primitive reading successfull

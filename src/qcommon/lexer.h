@@ -166,7 +166,7 @@ typedef struct token_s
 	int type;                       //last read token type
 	int subtype;                    //last read token sub type
 #ifdef NUMBERVALUE
-	int intvalue; //integer value
+	unsigned int intvalue; //integer value
 	float floatvalue;         //floating point value
 #endif //NUMBERVALUE
 	const char *whitespace_p;             //start of white space before token
