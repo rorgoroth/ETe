@@ -141,7 +141,7 @@ static client_t *SV_GetPlayerByNum( void ) {
 	}
 
 	cl = &svs.clients[idnum];
-	if ( !cl->state ) {
+	if ( cl->state < CS_CONNECTED ) {
 		Com_Printf( "Client %i is not active\n", idnum );
 		return NULL;
 	}
@@ -1202,11 +1202,11 @@ static void SV_Status_f( void ) {
 
 		// ping/status
 		if ( cl->state == CS_PRIMED )
-			Com_Printf( "PRM " );
+			Com_Printf( " PRM " );
 		else if ( cl->state == CS_CONNECTED )
-			Com_Printf( "CON " );
+			Com_Printf( " CON " );
 		else if ( cl->state == CS_ZOMBIE )
-			Com_Printf( "ZMB " );
+			Com_Printf( " ZMB " );
 		else
 			Com_Printf( "%4i ", cl->ping < 9999 ? cl->ping : 9999 );
 	
