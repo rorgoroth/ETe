@@ -318,7 +318,7 @@ static void SV_MapRestart_f( void ) {
 		delay = atoi( Cmd_Argv( 1 ) );
 	}
 
-	if ( delay ) {
+	if ( delay != 0 ) {
 		sv.restartTime = sv.time + delay * 1000;
 		if ( sv.restartTime == 0 ) {
 			sv.restartTime = 1;
