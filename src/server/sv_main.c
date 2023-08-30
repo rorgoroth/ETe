@@ -1859,9 +1859,14 @@ SV_LoadTag
 =================
 */
 int SV_LoadTag( const char *mod_name ) {
-	unsigned char*      buffer;
+	union {
+		uint32_t *u;
+		void *v;
+	} buffer;
 	tagHeader_t         *pinmodel;
 	int version;
+	int fileSize, size;
+	uint32_t ident = 0;
 	md3Tag_t            *tag;
 	md3Tag_t            *readTag;
 	int i, j;
@@ -1872,23 +1877,46 @@ int SV_LoadTag( const char *mod_name ) {
 		}
 	}
 
-	FS_ReadFile( mod_name, (void**)&buffer );
+	fileSize = FS_ReadFile( mod_name, &buffer.v );
 
-	if ( !buffer ) {
-		return qfalse;
+	if ( !buffer.v ) {
+		return 0;
 	}
 
-	pinmodel = (tagHeader_t *)buffer;
+	if ( fileSize < sizeof( tagHeader_t ) ) {
+		Com_Printf( S_COLOR_YELLOW "WARNING: %s: truncated header for %s\n", __func__, mod_name );
+		FS_FreeFile( buffer.v );
+		return 0;
+	}
+
+	ident = LittleLong( *buffer.u );
+
+	if ( ident != TAG_IDENT ) {
+		Com_Printf( S_COLOR_YELLOW "WARNING: %s: unknown fileid for %s\n", __func__, mod_name );
+		FS_FreeFile( buffer.v );
+		return 0;
+	}
+
+	pinmodel = (tagHeader_t *)buffer.v;
 
 	version = LittleLong( pinmodel->version );
 	if ( version != TAG_VERSION ) {
-		Com_Printf( S_COLOR_YELLOW "WARNING: SV_LoadTag: %s has wrong version (%i should be %i)\n", mod_name, version, TAG_VERSION );
+		FS_FreeFile( buffer.v );
+		Com_Printf( S_COLOR_YELLOW "WARNING: %s: %s has wrong version (%i should be %i)\n", __func__, mod_name, version, TAG_VERSION );
+		return 0;
+	}
+
+	size = LittleLong( pinmodel->ofsEnd );
+
+	if ( size > fileSize ) {
+		FS_FreeFile( buffer.v );
+		Com_Printf( S_COLOR_YELLOW "WARNING: %s: %s has corrupted header\n", __func__, mod_name );
 		return 0;
 	}
 
 	if ( sv.num_tagheaders >= MAX_TAG_FILES ) {
-		FS_FreeFile( buffer );
-		Com_Error( ERR_DROP, "MAX_TAG_FILES reached" );
+		FS_FreeFile( buffer.v );
+		Com_Error( ERR_DROP, "%s: MAX_TAG_FILES(%d) reached", __func__, MAX_TAG_FILES );
 		return 0;
 	}
 
@@ -1897,20 +1925,20 @@ int SV_LoadTag( const char *mod_name ) {
 	LL( pinmodel->ofsEnd );
 	LL( pinmodel->version );
 
-	Q_strncpyz( sv.tagHeadersExt[sv.num_tagheaders].filename, mod_name, MAX_QPATH );
+	Q_strncpyz( sv.tagHeadersExt[sv.num_tagheaders].filename, mod_name, sizeof(sv.tagHeadersExt[0].filename) );
 	sv.tagHeadersExt[sv.num_tagheaders].start = sv.num_tags;
 	sv.tagHeadersExt[sv.num_tagheaders].count = pinmodel->numTags;
 
 	if ( sv.num_tags + pinmodel->numTags >= MAX_SERVER_TAGS ) {
-		FS_FreeFile( buffer );
-		Com_Error( ERR_DROP, "MAX_SERVER_TAGS reached" );
-		return qfalse;
+		FS_FreeFile( buffer.v );
+		Com_Error( ERR_DROP, "%s: MAX_SERVER_TAGS(%d) reached", __func__, MAX_SERVER_TAGS );
+		return 0;
 	}
 
 	// swap all the tags
 	tag = &sv.tags[sv.num_tags];
 	sv.num_tags += pinmodel->numTags;
-	readTag = ( md3Tag_t* )( buffer + sizeof( tagHeader_t ) );
+	readTag = ( md3Tag_t* )( buffer.v + sizeof( tagHeader_t ) );
 	for ( i = 0 ; i < pinmodel->numTags; i++, tag++, readTag++ ) {
 		for ( j = 0 ; j < 3 ; j++ ) {
 			tag->origin[j] = LittleFloat( readTag->origin[j] );
@@ -1918,10 +1946,10 @@ int SV_LoadTag( const char *mod_name ) {
 			tag->axis[1][j] = LittleFloat( readTag->axis[1][j] );
 			tag->axis[2][j] = LittleFloat( readTag->axis[2][j] );
 		}
-		Q_strncpyz( tag->name, readTag->name, 64 );
+		Q_strncpyz( tag->name, readTag->name, sizeof(tag->name) );
 	}
 
-	FS_FreeFile( buffer );
+	FS_FreeFile( buffer.v );
 	return ++sv.num_tagheaders;
 }
 
