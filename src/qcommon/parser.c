@@ -1714,7 +1714,7 @@ int PC_EvaluateTokens( source_t *source, token_t *tokens, signed int *intvalue,
 				  //v = (value_t *) GetClearedMemory(sizeof(value_t));
 			AllocValue( v )
 			if ( negativevalue ) {
-				v->intvalue = -t->intvalue;
+				v->intvalue = -(signed int)(t->intvalue);
 				v->floatvalue = -t->floatvalue;
 			}     //end if
 			else

@@ -1860,6 +1860,7 @@ SV_LoadTag
 */
 int SV_LoadTag( const char *mod_name ) {
 	union {
+		byte *b;
 		uint32_t *u;
 		void *v;
 	} buffer;
@@ -1938,7 +1939,7 @@ int SV_LoadTag( const char *mod_name ) {
 	// swap all the tags
 	tag = &sv.tags[sv.num_tags];
 	sv.num_tags += pinmodel->numTags;
-	readTag = ( md3Tag_t* )( buffer.v + sizeof( tagHeader_t ) );
+	readTag = ( md3Tag_t* )( buffer.b + sizeof( tagHeader_t ) );
 	for ( i = 0 ; i < pinmodel->numTags; i++, tag++, readTag++ ) {
 		for ( j = 0 ; j < 3 ; j++ ) {
 			tag->origin[j] = LittleFloat( readTag->origin[j] );
