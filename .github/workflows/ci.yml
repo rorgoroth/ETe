@@ -192,14 +192,14 @@ jobs:
         arch: [x86_64]
         cc: [clang]
         cxx: [clang++]
-        config: [Release]
+        config: [Debug]
         include:
-          - config: Release
+          - config: Debug
             rule: install
 
     steps:
     - name: Install tools
-      run: brew install coreutils ninja sdl2
+      run: brew install coreutils ninja pkg-config sdl2
 
     - uses: actions/checkout@v3
       with:
