@@ -731,7 +731,11 @@ static void *try_dlopen(const char *base, const char *gamedir, const char *fname
 #ifdef __APPLE__
 const char *Sys_GetDLLName(const char *name)
 {
+#ifdef _DEBUG
+	return va("%s_d_mac", name);
+#else
 	return va("%s_mac", name);
+#endif
 }
 #else
 const char *Sys_GetDLLName(const char *name)
