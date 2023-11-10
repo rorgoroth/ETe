@@ -520,8 +520,12 @@ extern	cvar_t	*r_allowSoftwareGL;
 extern	cvar_t	*r_swapInterval;
 #ifndef USE_SDL
 extern	cvar_t	*r_glDriver;
+#ifdef _WIN32
+extern	cvar_t  *r_allowScreenSaver;
+#endif
 #else
 extern	cvar_t	*r_sdlDriver;
+extern	cvar_t	*r_allowScreenSaver;
 #endif
 extern	cvar_t	*r_displayRefresh;
 extern	cvar_t	*r_fullscreen;

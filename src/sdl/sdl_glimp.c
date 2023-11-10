@@ -560,6 +560,11 @@ static rserr_t GLimp_StartDriverAndSetMode( int mode, const char *modeFS, qboole
 			SDL_setenv("SDL_VIDEODRIVER", r_sdlDriver->string, 0 );
 		}
 
+		if ( r_allowScreenSaver->integer )
+		{
+			SDL_SetHint( SDL_HINT_VIDEO_ALLOW_SCREENSAVER, "1" );
+		}
+
 		/*
 			Starting from SDL2 2.0.14 The default value for SDL_HINT_VIDEO_MINIMIZE_ON_FOCUS_LOSS 
 			is now false for better compatibility with modern window managers, however it 
