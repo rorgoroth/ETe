@@ -178,7 +178,7 @@ typedef struct {
 ========================================================================
 */
 
-#define TAG_IDENT           ( ( '1' << 24 ) + ( 'G' << 16 ) + ( 'A' << 8 ) + 'T' )
+#define TAG_IDENT           ( ( '3' << 24 ) + ( 'G' << 16 ) + ( 'A' << 8 ) + 'T' )
 #define TAG_VERSION         1
 
 typedef struct {
