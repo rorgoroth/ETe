@@ -1453,7 +1453,6 @@ static int SV_WriteDownloadToClient( client_t *cl )
 			MSG_WriteLong( &msg, -1 ); // illegal file size
 			MSG_WriteString( &msg, errorMessage );
 
-			MSG_WriteByte( &msg, svc_EOF );
 			SV_Netchan_Transmit( cl, &msg );
 
 			*cl->downloadName = '\0';
@@ -1502,7 +1501,6 @@ static int SV_WriteDownloadToClient( client_t *cl )
 					}
 					MSG_WriteLong( &msg, download_flag ); // flags
 
-					MSG_WriteByte( &msg, svc_EOF );
 					SV_Netchan_Transmit( cl, &msg );
 					return 1;
 				} else {
@@ -1520,7 +1518,6 @@ static int SV_WriteDownloadToClient( client_t *cl )
 						MSG_WriteLong( &msg, 0 );
 						MSG_WriteLong( &msg, 2 ); // // DL_FLAG_URL
 
-						MSG_WriteByte( &msg, svc_EOF );
 						SV_Netchan_Transmit( cl, &msg );
 
 						if ( handle != FS_INVALID_HANDLE ) {
@@ -1544,7 +1541,6 @@ static int SV_WriteDownloadToClient( client_t *cl )
 					MSG_WriteLong( &msg, 0 );
 					MSG_WriteLong( &msg, 2 ); // // DL_FLAG_URL
 
-					MSG_WriteByte( &msg, svc_EOF );
 					SV_Netchan_Transmit( cl, &msg );
 
 					if ( handle != FS_INVALID_HANDLE ) {
@@ -1635,7 +1631,6 @@ static int SV_WriteDownloadToClient( client_t *cl )
 	if ( cl->downloadBlockSize[curindex] > 0 )
 		MSG_WriteData( &msg, cl->downloadBlocks[curindex], cl->downloadBlockSize[curindex] );
 
-	MSG_WriteByte( &msg, svc_EOF );
 	SV_Netchan_Transmit( cl, &msg );
 
 	Com_DPrintf( "clientDownload: %d : writing block %d\n", (int) (cl - svs.clients), cl->downloadXmitBlock );
