@@ -331,12 +331,18 @@ static int Com_DL_CallbackProgress( void *data, curl_off_t dltotal, curl_off_t d
 static int Com_DL_CallbackProgress( void *data, double dltotal, double dlnow, double ultotal, double ulnow )
 #endif
 {
-	double percentage;
 #if CURL_AT_LEAST_VERSION(7, 55, 0)
 	curl_off_t speed;
 #else
 	double speed;
 #endif
+
+#if CURL_AT_LEAST_VERSION(7, 32, 0)
+	curl_off_t percentage;
+#else
+	double percentage;
+#endif
+
 	download_t *dl = (download_t *)data;
 
 	dl->Size = (int)dltotal;
@@ -354,7 +360,11 @@ static int Com_DL_CallbackProgress( void *data, double dltotal, double dlnow, do
 	}
 
 	if ( dl->Size ) {
+#if CURL_AT_LEAST_VERSION(7, 32, 0)
+		percentage = ( dlnow * 100 ) / dltotal;
+#else
 		percentage = ( dlnow / dltotal ) * 100.0;
+#endif
 		sprintf( dl->progress, " downloading %s: %s (%i%%)", dl->Name, sizeToString( dl->Count ), (int)percentage );
 	} else {
 		sprintf( dl->progress, " downloading %s: %s", dl->Name, sizeToString( dl->Count ) );
@@ -618,7 +628,10 @@ qboolean Com_DL_Begin( download_t *dl, const char *localName, const char *remote
 #else
 	dl->func.easy_setopt( dl->cURL, CURLOPT_PROTOCOLS, ALLOWED_PROTOCOLS );
 #endif
+
+#ifdef CURL_MAX_READ_SIZE
 	dl->func.easy_setopt( dl->cURL, CURLOPT_BUFFERSIZE, CURL_MAX_READ_SIZE );
+#endif
 
 	dl->cURLM = dl->func.multi_init();
 
@@ -1065,7 +1078,10 @@ int DL_BeginDownload( const char *localName, const char *remoteName, int debug )
 #else
 	dl_curl_easy_setopt( dl_request, CURLOPT_PROTOCOLS, ALLOWED_PROTOCOLS );
 #endif
+
+#ifdef CURL_MAX_READ_SIZE
 	dl_curl_easy_setopt( dl_request, CURLOPT_BUFFERSIZE, CURL_MAX_READ_SIZE );
+#endif
 
 	if ( dl_curl_multi_add_handle( dl_multi, dl_request ) != CURLM_OK ) {
 		Com_Printf( S_COLOR_RED "ERROR: DL_BeginDownload: multi_add_handle() failed\n" );
