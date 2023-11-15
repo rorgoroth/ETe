@@ -346,6 +346,7 @@ qboolean fs_reordered;
 #define MAX_REF_PAKS	1024 /* note q3e:MAX_STRING_TOKENS=1024, et=256 enforcing to 1024 to match Q3e behavior*/
 
 // never load anything from pk3 files that are not present at the server when pure
+// ex: when fs_numServerPaks != 0, FS_FOpenFileRead won't load anything outside of pk3 except .cfg .menu .game .dat
 static int		fs_numServerPaks = 0;
 static int		fs_serverPaks[MAX_REF_PAKS];			// checksums
 static char		*fs_serverPakNames[MAX_REF_PAKS];		// pk3 names
@@ -1735,7 +1736,7 @@ int FS_FOpenFileRead( const char *filename, fileHandle_t *file, qboolean uniqueF
 					}
 					pakFile = pakFile->next;
 				} while ( pakFile != NULL );
-			} else if ( search->dir && search->policy != DIR_DENY ) {
+			} else if ( search->dir /*&& search->policy != DIR_DENY*/ ) {
 				if (fs_filter_flag & FS_EXCLUDE_DIR)
 					continue;
 				if (fs_filter_flag & FS_EXCLUDE_ETMAIN)
@@ -1748,6 +1749,20 @@ int FS_FOpenFileRead( const char *filename, fileHandle_t *file, qboolean uniqueF
 					if (Q_stricmp(search->dir->gamedir, fs_gamedir) != 0)
 						continue;
 				}
+				if ( search->policy == DIR_DENY && fs_numServerPaks )
+				{
+					// allowed non-ref extensions
+					static const char *extList[] = { "cfg", "menu", "game", "dat", "botents" };
+					static const char *demoList[] = { DEMOEXT "84", DEMOEXT "85" };
+
+					if ( !FS_HasExt( filename, extList, ARRAY_LEN( extList ) ) &&
+						!FS_HasExt( filename, demoList, ARRAY_LEN( demoList ) ) &&
+						!FS_IsExt( filename, "bots.txt", strlen( filename ) ) )
+					{
+						continue;
+					}
+				}
+
 				dir = search->dir;
 				netpath = FS_BuildOSPath( dir->path, dir->gamedir, filename );
 				temp = Sys_FOpen( netpath, "rb" );
@@ -1807,7 +1822,7 @@ int FS_FOpenFileRead( const char *filename, fileHandle_t *file, qboolean uniqueF
 				}
 				pakFile = pakFile->next;
 			} while ( pakFile != NULL );
-		} else if ( search->dir && search->policy != DIR_DENY ) {
+		} else if ( search->dir /*&& search->policy != DIR_DENY*/ ) {
 			if (fs_filter_flag & FS_EXCLUDE_DIR)
 			{
 				continue;
@@ -1822,6 +1837,19 @@ int FS_FOpenFileRead( const char *filename, fileHandle_t *file, qboolean uniqueF
 			if (fs_filter_flag & FS_EXCLUDE_OTHERGAMES)
 			{
 				if (Q_stricmp(search->dir->gamedir, fs_gamedir) != 0)
+				{
+					continue;
+				}
+			}
+			if ( search->policy == DIR_DENY && fs_numServerPaks )
+			{
+				// allowed non-ref extensions
+				static const char *extList[] = { "cfg", "menu", "game", "dat", "botents" };
+				static const char *demoList[] = { DEMOEXT "84", DEMOEXT "85" };
+
+				if ( !FS_HasExt( filename, extList, ARRAY_LEN( extList ) ) &&
+					!FS_HasExt( filename, demoList, ARRAY_LEN( demoList ) ) &&
+					!FS_IsExt( filename, "bots.txt", strlen( filename ) ) )
 				{
 					continue;
 				}
@@ -2344,7 +2372,7 @@ int FS_Write( const void *buffer, int len, fileHandle_t h ) {
 	return len;
 }
 
-void QDECL FS_Printf( fileHandle_t h, const char *fmt, ... ) {
+void FORMAT_PRINTF(2, 3) QDECL FS_Printf( fileHandle_t h, const char *fmt, ... ) {
 	va_list		argptr;
 	char		msg[MAXPRINTMSG];
 
@@ -4553,7 +4581,7 @@ static void FS_Which_f( void ) {
 	directory_t		*dir;
 	long			hash;
 	FILE			*temp;
-	const char			*filename;
+	const char		*filename;
 	char			buf[ MAX_OSPATH*2 + 1 ];
 	int				numfound;
 
