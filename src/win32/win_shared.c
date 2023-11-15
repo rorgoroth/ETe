@@ -26,7 +26,6 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 
-
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qcommon.h"
 #include "win_local.h"
