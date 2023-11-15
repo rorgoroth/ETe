@@ -4269,7 +4269,7 @@ void Com_Init( char *commandLine ) {
 
 //==================================================================
 
-static void Com_WriteConfigToFile( const char *filename ) {
+static void Com_WriteConfigToFile( const char *filename, qboolean forcewrite, qboolean nodefault ) {
 	fileHandle_t	f;
 
 	f = FS_FOpenFileWrite( filename );
@@ -4284,7 +4284,7 @@ static void Com_WriteConfigToFile( const char *filename ) {
 #ifndef DEDICATED
 	Key_WriteBindings( f );
 #endif
-	Cvar_WriteVariables( f );
+	Cvar_WriteVariables( f, forcewrite, nodefault );
 	FS_FCloseFile( f );
 }
 
@@ -4313,12 +4313,12 @@ void Com_WriteConfiguration( void ) {
 
 #ifndef DEDICATED
 	if ( com_gameInfo.usesProfiles && cl_profileStr[0] ) {
-		Com_WriteConfigToFile( va( "profiles/%s/%s", cl_profileStr, CONFIG_NAME ) );
+		Com_WriteConfigToFile( va( "profiles/%s/%s", cl_profileStr, CONFIG_NAME ), qfalse, qfalse );
 	}
 	else
 #endif
 	{
-		Com_WriteConfigToFile( Q3CONFIG_CFG );
+		Com_WriteConfigToFile( Q3CONFIG_CFG, qfalse, qfalse );
 	}
 }
 
@@ -4333,13 +4333,37 @@ Write the config file to a specific name
 static void Com_WriteConfig_f( void ) {
 	char	filename[MAX_QPATH];
 	const char *ext;
+	int i, skip = 1;
+	qboolean force = qfalse, nodefault = qfalse;
 
-	if ( Cmd_Argc() != 2 ) {
-		Com_Printf( "Usage: writeconfig <filename>\n" );
+	if ( Cmd_Argc() < 2 ) {
+		Com_Printf( "Usage: writeconfig [options] <filename>\n"
+					"-nd, --no-defaults : omit writing all cvars that are not default value\n"
+					"-f, --force : write all cvars regardless of archive and default value state\n" );
 		return;
 	}
 
-	Q_strncpyz( filename, Cmd_Argv(1), sizeof( filename ) );
+	if ( Cmd_Argc() >= 3 ) {
+		for ( i = 1; i < Cmd_Argc(); i++ ) {
+			const char *opt = Cmd_Argv(i);
+			if ( !Q_stricmp(opt, "-nd") || !Q_stricmp(opt, "--no-defaults") ) {
+				nodefault = qtrue;
+				skip++;
+			}
+			else if ( !Q_stricmp(opt, "-f") || !Q_stricmp(opt, "--force") ) {
+				force = qtrue;
+				skip++;
+			}
+		}
+	}
+	else {
+		Com_Printf( "Usage: writeconfig [options] <filename>\n"
+					"-nd, --no-defaults : omit writing all cvars that are not default value\n"
+					"-f, --force : write all cvars regardless of archive and default value state\n" );
+		return;
+	}
+
+	Q_strncpyz( filename, Cmd_Argv(skip), sizeof( filename ) );
 	COM_DefaultExtension( filename, sizeof( filename ), ".cfg" );
 
 	if ( !FS_AllowedExtension( filename, qfalse, &ext ) ) {
@@ -4353,7 +4377,7 @@ static void Com_WriteConfig_f( void ) {
 	}
 
 	Com_Printf( "Writing %s.\n", filename );
-	Com_WriteConfigToFile( filename );
+	Com_WriteConfigToFile( filename, force, nodefault );
 }
 
 

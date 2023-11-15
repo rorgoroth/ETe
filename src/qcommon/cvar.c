@@ -1560,7 +1560,7 @@ Appends lines containing "set variable value" for all variables
 with the archive flag set to qtrue.
 ============
 */
-void Cvar_WriteVariables( fileHandle_t f )
+void Cvar_WriteVariables( fileHandle_t f, qboolean forcewrite, qboolean nodefault )
 {
 	cvar_t	*var;
 	char	buffer[MAX_CMD_LINE];
@@ -1577,7 +1577,7 @@ void Cvar_WriteVariables( fileHandle_t f )
 		if ( !var->name || Q_stricmp( var->name, "cl_cdkey" ) == 0 )
 			continue;
 
-		if ( var->flags & CVAR_ARCHIVE ) {
+		if ( forcewrite || (var->flags & CVAR_ARCHIVE) ) {
 			int len;
 			// write the latched value, even if it hasn't taken effect yet
 			value = var->latchedString ? var->latchedString : var->string;
@@ -1586,7 +1586,7 @@ void Cvar_WriteVariables( fileHandle_t f )
 					value == var->latchedString ? "latched " : "", var->name );
 				continue;
 			}
-			if ( (var->flags & CVAR_NODEFAULT) && !strcmp( value, var->resetString ) ) {
+			if ( !forcewrite && (nodefault || (var->flags & CVAR_NODEFAULT)) && !strcmp( value, var->resetString ) ) {
 				continue;
 			}
 			if ( var->flags & CVAR_UNSAFE )
