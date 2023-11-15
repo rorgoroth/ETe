@@ -47,7 +47,7 @@ static void SV_SendConfigstring(client_t *client, int index)
 	if( len >= maxChunkSize ) {
 		int		sent = 0;
 		int		remaining = len;
-		char	*cmd;
+		const char	*cmd;
 		char	buf[MAX_STRING_CHARS];
 
 		while (remaining > 0 ) {
@@ -1016,9 +1016,8 @@ void SV_Init( void )
 
 	sv_gameType = Cvar_Get( "g_gametype", va( "%i", com_gameInfo.defaultGameType ), CVAR_SERVERINFO | CVAR_LATCH );
 
-	// the download netcode tops at 18/20 kb/s, no need to make you think you can go above
-	sv_dl_maxRate = Cvar_Get( "sv_dl_maxRate", "42000", CVAR_ARCHIVE );
-	//Cvar_CheckRange( sv_dl_maxRate, "0", "100000", CV_INTEGER );
+	sv_dl_maxRate = Cvar_Get( "sv_dl_maxRate", "2000000", CVAR_ARCHIVE );
+	Cvar_CheckRange( sv_dl_maxRate, "0", NULL, CV_INTEGER );
 	Cvar_SetDescription( sv_dl_maxRate, "Bandwidth allotted to PK3 file downloads via UDP, in byte/s" );
 
 	sv_wwwDownload = Cvar_Get( "sv_wwwDownload", "0", CVAR_ARCHIVE );

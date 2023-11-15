@@ -1794,7 +1794,7 @@ int SV_SendQueuedPackets( void )
 	if(delayT >= 0)
 		timeVal = delayT;
 
-	if(sv_dl_maxRate->integer)//sv_dlRate
+	if(sv_dl_maxRate->integer)
 	{
 		// Rate limiting. This is very imprecise for high
 		// download rates due to millisecond timedelta resolution
@@ -1817,7 +1817,6 @@ int SV_SendQueuedPackets( void )
 
 				delayT = 1000 * numBlocks * MAX_DOWNLOAD_BLKSIZE;
 				delayT /= sv_dl_maxRate->integer;
-				//delayT /= sv_dlRate->integer * 1024;
 
 				if(delayT <= deltaT + 1)
 				{
