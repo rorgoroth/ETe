@@ -4338,7 +4338,7 @@ static void Com_WriteConfig_f( void ) {
 
 	if ( Cmd_Argc() < 2 ) {
 		Com_Printf( "Usage: writeconfig [options] <filename>\n"
-					"-nd, --no-defaults : omit writing all cvars that are not default value\n"
+					"-nd, --no-defaults : omit writing all cvars that are at default values\n"
 					"-f, --force : write all cvars regardless of archive and default value state\n" );
 		return;
 	}
@@ -4358,7 +4358,7 @@ static void Com_WriteConfig_f( void ) {
 	}
 	else {
 		Com_Printf( "Usage: writeconfig [options] <filename>\n"
-					"-nd, --no-defaults : omit writing all cvars that are not default value\n"
+					"-nd, --no-defaults : omit writing all cvars that are at default values\n"
 					"-f, --force : write all cvars regardless of archive and default value state\n" );
 		return;
 	}
