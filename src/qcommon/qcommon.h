@@ -1385,7 +1385,6 @@ NON-PORTABLE SYSTEM SERVICES
 ==============================================================
 */
 
-#ifndef USE_SDL
 typedef enum {
 	AXIS_SIDE,
 	AXIS_FORWARD,
@@ -1395,9 +1394,6 @@ typedef enum {
 	AXIS_PITCH,
 	MAX_JOYSTICK_AXIS
 } joystickAxis_t;
-#else
-#define MAX_JOYSTICK_AXIS 16
-#endif
 
 typedef enum {
   // bk001129 - make sure SE_NONE is zero
