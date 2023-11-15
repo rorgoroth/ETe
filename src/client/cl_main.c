@@ -379,11 +379,12 @@ CL_WriteServerCommands
 static void CL_WriteServerCommands( msg_t *msg ) {
 	int i;
 
-	if ( clc.demoCommandSequence < clc.serverCommandSequence ) {
+	if ( clc.serverCommandSequence - clc.demoCommandSequence > 0 ) {
 
 		// do not write more than MAX_RELIABLE_COMMANDS
-		if ( clc.serverCommandSequence - clc.demoCommandSequence > MAX_RELIABLE_COMMANDS )
+		if ( clc.serverCommandSequence - clc.demoCommandSequence > MAX_RELIABLE_COMMANDS ) {
 			clc.demoCommandSequence = clc.serverCommandSequence - MAX_RELIABLE_COMMANDS;
+		}
 
 		for ( i = clc.demoCommandSequence + 1 ; i <= clc.serverCommandSequence; i++ ) {
 			MSG_WriteByte( msg, svc_serverCommand );
@@ -1554,7 +1555,7 @@ static void CL_RequestMotd( void ) {
 	cls.updateServer.port = BigShort( PORT_MOTD );
 	Com_Printf( "%s resolved to %s\n", MOTD_SERVER_NAME, NET_AdrToStringwPort( &cls.updateServer ) );
 
-	info[0] = 0;
+	info[0] = '\0';
 	Com_sprintf( cls.updateChallenge, sizeof( cls.updateChallenge ), "%i", rand() );
 
 	Info_SetValueForKey( info, "challenge", cls.updateChallenge );
@@ -1959,12 +1960,9 @@ Wrapper for CL_Vid_Restart
 */
 static void CL_Vid_Restart_f( void ) {
 
-	if ( Q_stricmp( Cmd_Argv(1), "keep_window" ) == 0 ) {
+	if ( Q_stricmp( Cmd_Argv( 1 ), "keep_window" ) == 0 || Q_stricmp( Cmd_Argv( 1 ), "fast" ) == 0 ) {
 		// fast path: keep window
 		CL_Vid_Restart( REF_KEEP_WINDOW );
-	} else if ( Q_stricmp(Cmd_Argv(1), "fast") == 0 ) {
-		// fast path: keep context
-		CL_Vid_Restart( REF_KEEP_CONTEXT );
 	} else {
 		CL_Vid_Restart( REF_DESTROY_WINDOW );
 	}
@@ -2249,7 +2247,7 @@ void CL_NextDownload( void )
 			Com_Error(ERR_DROP, "Incorrect checksum for file: %s", clc.downloadName);
 	}
 
-	*clc.downloadTempName = *clc.downloadName = 0;
+	*clc.downloadTempName = *clc.downloadName = '\0';
 	Cvar_Set("cl_downloadName", "");
 
 	// We are looking to start a download here
@@ -5936,7 +5934,7 @@ void CL_LoadTransTable( const char *fileName ) {
 	}
 
 	FS_Read( text, len, f );
-	text[len] = 0;
+	text[len] = '\0';
 	FS_FCloseFile( f );
 
 	// parse the text

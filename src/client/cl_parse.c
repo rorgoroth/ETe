@@ -948,7 +948,7 @@ static void CL_ParseDownload( msg_t *msg ) {
 
 	// TTimo - www dl
 	// if we haven't acked the download redirect yet
-	if ( block == 0xFFFFu ) {
+	if ( block == UINT16_MAX ) {
 		if ( !clc.bWWWDl ) {
 			// server is sending us a www download
 			Q_strncpyz( cls.originalDownloadName, cls.downloadName, sizeof( cls.originalDownloadName ) );
@@ -1071,9 +1071,9 @@ static void CL_ParseDownload( msg_t *msg ) {
 			clc.download = FS_INVALID_HANDLE;
 
 			// rename the file
-			FS_SV_Rename( cls.downloadTempName, cls.downloadName );
+			FS_SV_Rename( clc.downloadTempName, clc.downloadName );
 		}
-		*cls.downloadTempName = *cls.downloadName = 0;
+		*cls.downloadTempName = *cls.downloadName = '\0';
 		Cvar_Set( "cl_downloadName", "" );
 
 		// send intentions now

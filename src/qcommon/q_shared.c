@@ -1239,7 +1239,7 @@ int Com_HexStrToInt( const char *str )
 		return -1;
 
 	// check for hex code
-	if( str[ 0 ] == '0' && str[ 1 ] == 'x' && str[ 2 ] != '\0' )
+	if ( str[ 0 ] == '0' && str[ 1 ] == 'x' && str[ 2 ] != '\0' )
 	{
 		int i, digit, n = 0, len = strlen( str );
 
@@ -1530,6 +1530,32 @@ void Q_strncpyz( char *dest, const char *src, int destsize )
 }
 
 
+/*
+=============
+Q_strncpy
+=============
+*/
+char *Q_strncpy( char *dest, const char *src, int destsize )
+{
+	char *start = dest;
+
+	while ( destsize > 0 && (*dest++ = *src++) != '\0' ) {
+		--destsize;
+	}
+
+	while ( --destsize > 0 ) {
+		*dest++ = '\0';
+	}
+
+	return start;
+}
+
+
+/*
+=============
+Q_stricmpn
+=============
+*/
 int Q_stricmpn( const char *s1, const char *s2, int n ) {
 	unsigned char c1, c2;
 
@@ -1998,7 +2024,7 @@ const char * FORMAT_PRINTF(1, 2) QDECL va( const char *format, ... )
 ============
 Com_TruncateLongString
 
-Assumes buffer is atleast TRUNCATE_LENGTH big
+Assumes buffer is at least TRUNCATE_LENGTH big
 ============
 */
 void Com_TruncateLongString( char *buffer, const char *s )

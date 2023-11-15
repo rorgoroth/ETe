@@ -112,9 +112,6 @@ static void IN_MLookDown( void ) {
 
 static void IN_MLookUp( void ) {
 	kb[KB_MLOOK].active = qfalse;
-	if ( !cl_freelook->integer ) {
-//		IN_CenterView ();
-	}
 }
 
 
@@ -304,12 +301,6 @@ static void IN_LeanRightUp( void )   { IN_KeyUp( &kb[KB_WBUTTONS5] );  }
 // Arnout: now wbutton prone
 static void IN_ProneDown( void ) {IN_KeyDown( &kb[KB_WBUTTONS7] );}
 static void IN_ProneUp( void ) {IN_KeyUp( &kb[KB_WBUTTONS7] );}
-
-/*
-void IN_CenterView (void) {
-	cl.viewangles[PITCH] = -SHORT2ANGLE(cl.snap.ps.delta_angles[PITCH]);
-}
-*/
 
 //==========================================================================
 

@@ -1330,7 +1330,7 @@ static void RoQShutdown( void ) {
 		}
 		CL_handle = -1;
 	}
-	cinTable[currentHandle].fileName[0] = 0;
+	cinTable[currentHandle].fileName[0] = '\0';
 	currentHandle = -1;
 }
 

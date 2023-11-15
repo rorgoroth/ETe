@@ -36,6 +36,7 @@ If you have questions concerning this license or the applicable additional terms
 #include "resource.h"
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <errno.h>
 #include <direct.h>
 #include <io.h>
 
@@ -149,7 +150,7 @@ Sys_Error
 Show the early console as an error dialog
 =============
 */
-void NORETURN QDECL Sys_Error( const char *error, ... ) {
+void NORETURN FORMAT_PRINTF(1, 2) QDECL Sys_Error( const char *error, ... ) {
 	va_list	argptr;
 	char	text[4096];
 	MSG		msg;
@@ -217,9 +218,17 @@ void Sys_Print( const char *msg )
 Sys_Mkdir
 ==============
 */
-void Sys_Mkdir( const char *path )
+qboolean Sys_Mkdir( const char *path )
 {
-	_mkdir( path );
+	if ( _mkdir( path ) == 0 ) {
+		return qtrue;
+	} else {
+		if ( errno == EEXIST ) {
+			return qtrue;
+		} else {
+			return qfalse;
+		}
+	}
 }
 
 
@@ -949,18 +958,25 @@ static const char *GetExceptionName( DWORD code )
 	switch ( code )
 	{
 		case EXCEPTION_ACCESS_VIOLATION: return "ACCESS_VIOLATION";
-		case EXCEPTION_DATATYPE_MISALIGNMENT: return "DATATYPE_MISALIGNMENT";
 		case EXCEPTION_ARRAY_BOUNDS_EXCEEDED: return "ARRAY_BOUNDS_EXCEEDED";
-		case EXCEPTION_PRIV_INSTRUCTION: return "PRIV_INSTRUCTION";
-		case EXCEPTION_IN_PAGE_ERROR: return "IN_PAGE_ERROR";
-		case EXCEPTION_ILLEGAL_INSTRUCTION: return "ILLEGAL_INSTRUCTION";
-		case EXCEPTION_NONCONTINUABLE_EXCEPTION: return "NONCONTINUABLE_EXCEPTION";
-		case EXCEPTION_STACK_OVERFLOW: return "STACK_OVERFLOW";
-		case EXCEPTION_INVALID_DISPOSITION: return "INVALID_DISPOSITION";
-		case EXCEPTION_GUARD_PAGE: return "GUARD_PAGE";
-		case EXCEPTION_INVALID_HANDLE: return "INVALID_HANDLE";
-		case EXCEPTION_INT_DIVIDE_BY_ZERO: return "INT_DIVIDE_BY_ZERO";
+		case EXCEPTION_DATATYPE_MISALIGNMENT: return "DATATYPE_MISALIGNMENT";
+		case EXCEPTION_FLT_DENORMAL_OPERAND: return "FLT_DENORMAL_OPERAND";
 		case EXCEPTION_FLT_DIVIDE_BY_ZERO: return "FLT_DIVIDE_BY_ZERO";
+		case EXCEPTION_FLT_INEXACT_RESULT: return "FLT_INEXACT_RESULT";
+		case EXCEPTION_FLT_INVALID_OPERATION: return "FLT_INVALID_OPERATION";
+		case EXCEPTION_FLT_OVERFLOW: return "FLT_OVERFLOW";
+		case EXCEPTION_FLT_STACK_CHECK: return "FLT_STACK_CHECK";
+		case EXCEPTION_FLT_UNDERFLOW: return "FLT_UNDERFLOW";
+		case EXCEPTION_GUARD_PAGE: return "GUARD_PAGE";
+		case EXCEPTION_ILLEGAL_INSTRUCTION: return "ILLEGAL_INSTRUCTION";
+		case EXCEPTION_IN_PAGE_ERROR: return "IN_PAGE_ERROR";
+		case EXCEPTION_INT_DIVIDE_BY_ZERO: return "INT_DIVIDE_BY_ZERO";
+		case EXCEPTION_INT_OVERFLOW: return "INT_OVERFLOW";
+		case EXCEPTION_INVALID_DISPOSITION: return "INVALID_DISPOSITION";
+		case EXCEPTION_INVALID_HANDLE: return "INVALID_HANDLE";
+		case EXCEPTION_NONCONTINUABLE_EXCEPTION: return "NONCONTINUABLE_EXCEPTION";
+		case EXCEPTION_PRIV_INSTRUCTION: return "PRIV_INSTRUCTION";
+		case EXCEPTION_STACK_OVERFLOW: return "STACK_OVERFLOW";
 		default: break;
 	}
 
@@ -992,9 +1008,9 @@ static LONG WINAPI ExceptionFilter( struct _EXCEPTION_POINTERS *ExceptionInfo )
 
 	if ( ExceptionInfo->ExceptionRecord->ExceptionCode != EXCEPTION_BREAKPOINT )
 	{
-		char msg[128], name[MAX_OSPATH];
+		char msg[256], name[MAX_OSPATH];
 		const char *basename;
-		HMODULE hModule;
+		HMODULE hModule, hKernel32;
 		byte *addr;
 
 		hModule = NULL;
@@ -1002,25 +1018,35 @@ static LONG WINAPI ExceptionFilter( struct _EXCEPTION_POINTERS *ExceptionInfo )
 		basename = name;
 		addr = (byte*)ExceptionInfo->ExceptionRecord->ExceptionAddress;
 
-		if ( GetModuleHandleEx( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCTSTR)addr, &hModule ) ) {
-			if ( GetModuleFileNameA( hModule, name, ARRAY_LEN( name ) - 1 ) != 0 ) {
-				name[ARRAY_LEN( name ) - 1] = '\0';
-				basename = strrchr( name, '\\' );
-				if ( basename ) {
-					basename = basename + 1;
-				} else {
-					basename = strrchr( name, '/' );
-					if ( basename ) {
-						basename = basename + 1;
+		hKernel32 = GetModuleHandleA( "kernel32" );
+		if ( hKernel32 != NULL ) {
+			typedef BOOL (WINAPI *PFN_GetModuleHandleExA)( DWORD dwFlags, LPCSTR lpModuleName, HMODULE *phModule );
+			PFN_GetModuleHandleExA pGetModuleHandleExA;
+
+			pGetModuleHandleExA = (PFN_GetModuleHandleExA) GetProcAddress( hKernel32, "GetModuleHandleExA" );
+			if ( pGetModuleHandleExA != NULL ) {
+				if ( pGetModuleHandleExA( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPCTSTR)addr, &hModule ) ) {
+					if (GetModuleFileNameA( hModule, name, ARRAY_LEN(name) - 1) != 0 ) {
+						name[ARRAY_LEN(name) - 1] = '\0';
+						basename = strrchr( name, '\\' );
+						if ( basename ) {
+							basename = basename + 1;
+						}
+						else {
+							basename = strrchr( name, '/' );
+							if ( basename ) {
+								basename = basename + 1;
+							}
+						}
 					}
 				}
 			}
 		}
 
-		if ( *basename ) {
+		if ( basename && *basename ) {
 			Com_sprintf( msg, sizeof( msg ), "Exception Code: %s\nException Address: %s@%x",
 				GetExceptionName( ExceptionInfo->ExceptionRecord->ExceptionCode ),
-				basename, addr - (byte*)hModule );
+				basename, (uint32_t)(addr - (byte*)hModule) );
 		} else {
 			Com_sprintf( msg, sizeof( msg ), "Exception Code: %s\nException Address: %p",
 				GetExceptionName( ExceptionInfo->ExceptionRecord->ExceptionCode ),
@@ -1032,36 +1058,6 @@ static LONG WINAPI ExceptionFilter( struct _EXCEPTION_POINTERS *ExceptionInfo )
 
 	return EXCEPTION_EXECUTE_HANDLER;
 }
-
-
-// Gets whether the current process has UAC virtualization enabled.
-// Returns TRUE on success and FALSE on failure.
-#if 0
-static qboolean WIN_IsVirtualizationEnabled(qboolean *status) {
-	HANDLE token;
-	DWORD temp;
-	DWORD len;
-	qboolean ret = qtrue;
-
-	if(!status)
-		return qfalse;
-
-	if(!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
-		return qfalse;
-
-	if(!GetTokenInformation(token, TokenVirtualizationEnabled, &temp, sizeof(temp), &len)) {
-		ret = qfalse;
-		goto err;
-	}
-
-	*status = temp != 0 ? qtrue : qfalse;
-
-err:
-	CloseHandle(token);
-
-	return ret;
-}
-#endif
 
 
 /*
@@ -1077,7 +1073,6 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	qboolean useXYpos;
 	HANDLE hProcess;
 	DWORD dwPriority;
-	//qboolean virtStatus = qfalse;
 
 	// should never get a previous instance in Win32
 	if ( hPrevInstance ) {
@@ -1114,13 +1109,6 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	Com_Printf( "Working directory: %s\n", Sys_Pwd() );
 
-#if 0
-	if ( WIN_IsVirtualizationEnabled(&virtStatus) ) {
-		if ( virtStatus )
-			Com_Printf( S_COLOR_YELLOW "WARNING: UAC Virtualization detected. Suggest installing outside of Program Files\n" );
-	}
-#endif
-
 	// hide the early console since we've reached the point where we
 	// have a working graphics subsystems
 	if ( !com_dedicated->integer && !com_viewlog->integer ) {
@@ -1128,7 +1116,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	}
 
 	// main game loop
-	while( 1 ) {
+	while ( 1 ) {
 		// set low precision every frame, because some system calls
 		// reset it arbitrarily
 		// _controlfp( _PC_24, _MCW_PC );

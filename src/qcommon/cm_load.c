@@ -304,9 +304,9 @@ static void CMod_LoadLeafs( const lump_t *l )
 	{
 		out->cluster = LittleLong( in->cluster );
 		out->area = LittleLong( in->area );
-		out->firstLeafBrush = LittleLong( in->firstLeafBrush ); // FIXME on big endian
+		out->firstLeafBrush = LittleLong( in->firstLeafBrush );
 		out->numLeafBrushes = LittleLong( in->numLeafBrushes );
-		out->firstLeafSurface = LittleLong( in->firstLeafSurface ); // FIXME on big endian
+		out->firstLeafSurface = LittleLong( in->firstLeafSurface );
 		out->numLeafSurfaces = LittleLong( in->numLeafSurfaces );
 
 		if ( out->cluster >= cm.numClusters )

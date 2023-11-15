@@ -193,7 +193,7 @@ the client game module: "cp", "print", "chat", etc
 A NULL client will broadcast to all clients
 =================
 */
-void QDECL SV_SendServerCommand( client_t *cl, const char *fmt, ... ) {
+void FORMAT_PRINTF(2,3) QDECL SV_SendServerCommand( client_t *cl, const char *fmt, ... ) {
 	va_list		argptr;
 	char		message[MAX_STRING_CHARS+128]; // slightly larger than allowed, to detect overflows
 	client_t	*client;

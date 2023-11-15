@@ -947,3 +947,18 @@ void Key_SetCatcher( int catcher )
 
 	keyCatchers = catcher;
 }
+
+
+void Key_VM_SetCatcher( int catcher )
+{
+	// Don't allow the cgame or ui module to close the console
+	// console overrides everything
+	if (keyCatchers & KEYCATCH_CONSOLE)
+	{
+		Key_SetCatcher( catcher | KEYCATCH_CONSOLE );
+	}
+	else
+	{
+		Key_SetCatcher( catcher );
+	}
+}

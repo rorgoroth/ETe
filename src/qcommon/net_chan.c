@@ -430,7 +430,7 @@ typedef struct {
 	int			get, send;
 } loopback_t;
 
-loopback_t	loopbacks[2];
+static loopback_t loopbacks[2]; // NS_CLIENT, NS_SERVER
 
 
 qboolean NET_GetLoopPacket( netsrc_t sock, netadr_t *net_from, msg_t *net_message )
@@ -600,7 +600,7 @@ NET_OutOfBandPrint
 Sends a text message in an out-of-band datagram
 ================
 */
-void QDECL NET_OutOfBandPrint( netsrc_t sock, const netadr_t *adr, const char *format, ... ) {
+void FORMAT_PRINTF(3, 4) QDECL NET_OutOfBandPrint( netsrc_t sock, const netadr_t *adr, const char *format, ... ) {
 	va_list		argptr;
 	char		string[ MAX_PACKETLEN ];
 	int			len;

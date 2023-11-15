@@ -333,7 +333,7 @@ float NormalizeColor( const vec3_t in, vec3_t out ) {
 =====================
 PlaneFromPoints
 
-Returns false if the triangle is degenrate.
+Returns false if the triangle is degenerate.
 The normal will point out of the clock for clockwise ordered points
 =====================
 */
@@ -360,6 +360,7 @@ This is not implemented very well...
 */
 void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point,
 							 float degrees ) {
+#if 0
 	float   m[3][3];
 	float   c, s, t;
 
@@ -380,7 +381,7 @@ void RotatePointAroundVector( vec3_t dst, const vec3_t dir, const vec3_t point,
 	m[2][1] = t*dir[1]*dir[2] - s*dir[0];
 	m[2][2] = t*dir[2]*dir[2] + c;
 	VectorRotate( point, m, dst );
-#if 0
+#else
 	float	m[3][3];
 	float	im[3][3];
 	float	zrot[3][3];
@@ -443,6 +444,7 @@ RotatePointArountVertex
 Rotate a point around a vertex
 ===============
 */
+#if 0
 void RotatePointAroundVertex( vec3_t pnt, float rot_x, float rot_y, float rot_z, const vec3_t origin ) {
 	float tmp[11];
 	//float rad_x, rad_y, rad_z;
@@ -475,6 +477,7 @@ void RotatePointAroundVertex( vec3_t pnt, float rot_x, float rot_y, float rot_z,
 	// move pnt back
 	VectorAdd( pnt, origin, pnt );
 }
+#endif
 
 /*
 ===============
@@ -624,12 +627,23 @@ void VectorRotate( const vec3_t in, const vec3_t matrix[3], vec3_t out )
 }
 
 //============================================================================
+#ifdef _MSC_SSE2
+#include <intrin.h>
+#endif
 
 /*
-** float q_rsqrt( float number )
+** float Q_rsqrt( float number )
 */
 float Q_rsqrt( float number )
 {
+#if defined(_MSC_SSE2)
+	float ret;
+	_mm_store_ss( &ret, _mm_rsqrt_ss( _mm_load_ss( &number ) ) );
+	return ret;
+#elif defined(_GCC_SSE2)
+	/* writing it this way allows gcc to recognize that rsqrt can be used with -ffast-math */
+	return 1.0f / sqrtf( number );
+#else
 	floatint_t t;
 	float x2, y;
 	const float threehalfs = 1.5F;
@@ -642,6 +656,7 @@ float Q_rsqrt( float number )
 //	y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
 
 	return y;
+#endif
 }
 
 

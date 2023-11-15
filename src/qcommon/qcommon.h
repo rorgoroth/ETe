@@ -1043,6 +1043,9 @@ extern	int	CPU_Flags;
 #define CPU_IDIVA  0x02
 #define CPU_VFPv3  0x04
 
+// ALTIVEC
+#define CPU_ALTIVEC 0x800
+
 typedef struct gameInfo_s {
 	qboolean spEnabled;
 	int spGameTypes;
@@ -1382,6 +1385,7 @@ NON-PORTABLE SYSTEM SERVICES
 ==============================================================
 */
 
+#ifndef USE_SDL
 typedef enum {
 	AXIS_SIDE,
 	AXIS_FORWARD,
@@ -1391,6 +1395,9 @@ typedef enum {
 	AXIS_PITCH,
 	MAX_JOYSTICK_AXIS
 } joystickAxis_t;
+#else
+#define MAX_JOYSTICK_AXIS 16
+#endif
 
 typedef enum {
   // bk001129 - make sure SE_NONE is zero
@@ -1435,7 +1442,8 @@ void	Sys_Print( const char *msg );
 void	QDECL Sys_SetStatus( const char *format, ...) FORMAT_PRINTF(1, 2);
 
 #ifdef USE_AFFINITY_MASK
-void	Sys_SetAffinityMask( int mask );
+uint64_t Sys_GetAffinityMask( void );
+qboolean Sys_SetAffinityMask( const uint64_t mask );
 #endif
 
 // Sys_Milliseconds should only be used for profiling purposes,
@@ -1459,7 +1467,7 @@ qboolean	Sys_StringToAdr( const char *s, netadr_t *a, netadrtype_t family );
 qboolean	Sys_IsLANAddress(const netadr_t *adr);
 void		Sys_ShowIP(void);
 
-void	Sys_Mkdir( const char *path );
+qboolean	Sys_Mkdir( const char *path );
 FILE	*Sys_FOpen( const char *ospath, const char *mode );
 qboolean Sys_ResetReadOnlyAttribute( const char *ospath );
 qboolean Sys_IsHiddenFolder( const char *ospath );

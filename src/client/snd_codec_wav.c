@@ -72,7 +72,7 @@ static int S_ReadChunkInfo(fileHandle_t f, char *name)
 {
 	int len, r;
 
-	name[4] = 0;
+	name[4] = '\0';
 
 	r = FS_Read(name, 4, f);
 	if(r != 4)

@@ -751,7 +751,7 @@ static int GetConfigString(int index, char *buf, int size)
 	offset = cl.gameState.stringOffsets[index];
 	if (!offset) {
 		if( size ) {
-			buf[0] = 0;
+			buf[0] = '\0';
 		}
 		return qfalse;
 	}
@@ -1086,8 +1086,7 @@ static intptr_t CL_UISystemCalls( intptr_t *args ) {
 		return Key_GetCatcher();
 
 	case UI_KEY_SETCATCHER:
-		// Don't allow the ui module to close the console
-		Key_SetCatcher( args[1] | ( Key_GetCatcher( ) & KEYCATCH_CONSOLE ) );
+		Key_VM_SetCatcher( args[1] );
 		return 0;
 
 	case UI_GETCLIPBOARDDATA:

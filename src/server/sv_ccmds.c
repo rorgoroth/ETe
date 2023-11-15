@@ -1279,8 +1279,8 @@ static void SV_ConTell_f( void ) {
 
 	msg = Cmd_ArgsFrom( 2 );
 
-	Com_Printf( S_COLOR_MAGENTA "console: %s\n", msg );
-	SV_SendServerCommand( cl, "chat \"" S_COLOR_MAGENTA "console: %s\"", msg );
+	Com_Printf( S_COLOR_MAGENTA "server: %s\n", msg );
+	SV_SendServerCommand( cl, "chat \"" S_COLOR_MAGENTA "server: %s\"", msg );
 }
 
 

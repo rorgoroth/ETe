@@ -628,7 +628,6 @@ void CL_ShutdownInput( void );
 void CL_SendCmd( void );
 
 void CL_WritePacket( void );
-//void IN_CenterView (void);
 
 //
 // cl_keys.c
@@ -780,8 +779,8 @@ void CL_InitUI( void );
 void CL_ShutdownUI( void );
 int Key_GetCatcher( void );
 void Key_SetCatcher( int catcher );
+void Key_VM_SetCatcher( int catcher );
 int LAN_AddFavAddr( const char *address );
-
 
 //
 // cl_net_chan.c

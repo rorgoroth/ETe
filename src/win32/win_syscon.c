@@ -950,7 +950,7 @@ void Sys_ShowConsole( int visLevel, qboolean quitOnClose )
 Sys_SetStatus
 =============
 */
-void QDECL Sys_SetStatus( const char *format, ... )
+void FORMAT_PRINTF(1, 2) QDECL Sys_SetStatus( const char *format, ... )
 {
 	va_list		argptr;
 	char		text[256];

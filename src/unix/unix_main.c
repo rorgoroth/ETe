@@ -962,7 +962,7 @@ static const char *getANSIcolor(const int ETcolor)
 	return NULL;
 }
 
-static qboolean printableChar(char c)
+static qboolean printableChar(const char c)
 {
 	if ((c >= ' ' && c <= '~') || c == '\n' || c == '\r' || c == '\t')
 		return qtrue;
@@ -1045,7 +1045,7 @@ void Sys_Print(const char *msg)
 	}
 }
 
-void QDECL Sys_SetStatus(const char *format, ...)
+void FORMAT_PRINTF(1, 2) QDECL Sys_SetStatus(const char *format, ...)
 {
 	return;
 }
