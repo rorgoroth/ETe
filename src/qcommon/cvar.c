@@ -952,7 +952,7 @@ void Cvar_SetValueExt( const char *var_name, float value, qboolean force) {
 	if ( value == (int)value ) {
 		Com_sprintf (val, sizeof(val), "%i",(int)value);
 	} else {
-		Com_sprintf (val, sizeof(val), "%f",value);
+		Com_sprintf (val, sizeof(val), "%g",value);
 	}
 	Cvar_Set2 (var_name, val, force);
 }
@@ -990,7 +990,7 @@ void Cvar_SetValueSafe( const char *var_name, float value )
 	if( Q_isintegral( value ) )
 		Com_sprintf( val, sizeof(val), "%i", (int)value );
 	else
-		Com_sprintf( val, sizeof(val), "%f", value );
+		Com_sprintf( val, sizeof(val), "%g", value );
 	Cvar_SetSafe( var_name, val );
 }
 
@@ -1545,7 +1545,7 @@ static void Cvar_Func_f( void ) {
 		if ( (int)fval == fval )
 			sprintf( value, "%i", (int)fval );
 		else
-			sprintf( value, "%f", fval );
+			sprintf( value, "%g", fval );
 	}
 
 	Cvar_Set2( cvar_name, value, qfalse );
