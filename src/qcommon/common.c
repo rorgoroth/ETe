@@ -4356,12 +4356,6 @@ static void Com_WriteConfig_f( void ) {
 			}
 		}
 	}
-	else {
-		Com_Printf( "Usage: writeconfig [options] <filename>\n"
-					"-nd, --no-defaults : omit writing all cvars that are at default values\n"
-					"-f, --force : write all cvars regardless of archive and default value state\n" );
-		return;
-	}
 
 	Q_strncpyz( filename, Cmd_Argv(skip), sizeof( filename ) );
 	COM_DefaultExtension( filename, sizeof( filename ), ".cfg" );
