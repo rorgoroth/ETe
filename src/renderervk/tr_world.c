@@ -1101,7 +1101,7 @@ R_PointInLeaf
 static mnode_t *R_PointInLeaf( const vec3_t p ) {
 	mnode_t		*node;
 	float		d;
-	cplane_t	*plane;
+	const cplane_t	*plane;
 	
 	if ( !tr.world ) {
 		ri.Error (ERR_DROP, "R_PointInLeaf: bad model");
@@ -1143,8 +1143,8 @@ R_inPVS
 =================
 */
 qboolean R_inPVS( const vec3_t p1, const vec3_t p2 ) {
-	mnode_t *leaf;
-	byte	*vis;
+	const mnode_t *leaf;
+	const byte	*vis;
 
 	leaf = R_PointInLeaf( p1 );
 	vis = ri.CM_ClusterPVS( leaf->cluster );

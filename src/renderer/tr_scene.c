@@ -425,8 +425,7 @@ void RE_AddRefEntityToScene( const refEntity_t *ent, qboolean intShaderTime ) {
 	r_numentities++;
 
 	// ydnar: add projected shadows for this model
-	// Arnout: casting const away
-	R_AddModelShadow( /*(refEntity_t*)*/ ent );
+	R_AddModelShadow( ent );
 }
 
 extern qboolean modIsETF;

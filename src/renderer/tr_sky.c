@@ -744,7 +744,7 @@ static void FillCloudBox( void )
 /*
 ** R_BuildCloudData
 */
-static void R_BuildCloudData( shaderCommands_t *input )
+static void R_BuildCloudData( const shaderCommands_t *input )
 {
 	const shader_t *shader;
 
@@ -1000,7 +1000,9 @@ void RB_StageIteratorSky( void ) {
 		}
 	}
 
+#ifdef USE_VBO
 	VBO_UnBind();
+#endif
 
 	backEnd.refdef.rdflags |= RDF_DRAWINGSKY;
 

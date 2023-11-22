@@ -932,7 +932,7 @@ static void R_SetupFrustum( viewParms_t *dest, float xmin, float xmax, float yma
 
 	// ydnar: farplane (testing! use farplane for real)
 	VectorScale( dest->orientation.axis[ 0 ], -1, dest->frustum[ 4 ].normal );
-	dest->frustum[ 4 ].dist = DotProduct( dest->orientation.origin, dest->frustum[ 4 ].normal ) - dest->zFar;
+	dest->frustum[ 4 ].dist = DotProduct( ofsorigin, dest->frustum[ 4 ].normal ) - dest->zFar;
 	dest->frustum[ 4 ].type = PLANE_NON_AXIAL;
 	SetPlaneSignbits( &dest->frustum[ 4 ] );
 
@@ -1965,7 +1965,7 @@ static void R_AddEntitySurfaces( void ) {
 
 		//
 		// the weapon model must be handled special --
-		// we don't want the hacked weapon position showing in 
+		// we don't want the hacked first person weapon position showing in 
 		// mirrors, because the true body position will already be drawn
 		//
 		if ( (ent->e.renderfx & RF_FIRST_PERSON) && (tr.viewParms.portalView != PV_NONE) ) {

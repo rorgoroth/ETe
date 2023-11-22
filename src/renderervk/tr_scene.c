@@ -22,31 +22,31 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "tr_local.h"
 
-int			r_firstSceneDrawSurf;
+static int			r_firstSceneDrawSurf;
 #ifdef USE_PMLIGHT
-int			r_firstSceneLitSurf;
+static int			r_firstSceneLitSurf;
 #endif
 
 int			r_numdlights;
-int			r_firstSceneDlight;
+static int			r_firstSceneDlight;
 
-int r_numcoronas;
-int r_firstSceneCorona;
-int			r_numentities;
-int			r_firstSceneEntity;
+static int			r_numcoronas;
+static int			r_firstSceneCorona;
+static int			r_numentities;
+static int			r_firstSceneEntity;
 
-int			r_numpolys;
-int			r_firstScenePoly;
+static int			r_numpolys;
+static int			r_firstScenePoly;
 
 int			r_numpolyverts;
 
-int r_firstScenePolybuffer;
-int r_numpolybuffers;
+static int			r_firstScenePolybuffer;
+static int			r_numpolybuffers;
 
 // ydnar: decals
-int r_firstSceneDecalProjector;
-int r_numDecalProjectors;
-int r_firstSceneDecal;
+static int			r_firstSceneDecalProjector;
+int			r_numDecalProjectors;
+int			r_firstSceneDecal;
 
 int skyboxportal; // signifies if the loaded map has a skyboxportal
 /*
@@ -96,7 +96,6 @@ RE_ClearScene
 */
 void RE_ClearScene( void ) {
 	int i;
-
 
 	// ydnar: clear model stuff for dynamic fog
 	if ( tr.world != NULL ) {
@@ -410,8 +409,7 @@ void RE_AddRefEntityToScene( const refEntity_t *ent, qboolean intShaderTime ) {
 	r_numentities++;
 
 	// ydnar: add projected shadows for this model
-	// Arnout: casting const away
-	R_AddModelShadow( /*(refEntity_t*)*/ ent );
+	R_AddModelShadow( ent );
 }
 
 extern qboolean modIsETF;

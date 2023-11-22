@@ -30,21 +30,23 @@ If you have questions concerning this license or the applicable additional terms
 #define TR_LOCAL_H
 
 #define USE_LEGACY_DLIGHTS	// vet dynamic lights
-#define USE_PMLIGHT			// promode dynamic lights via \r_dlightMode 1
+#define USE_PMLIGHT			// promode dynamic lights via \r_dlightMode 1|2
 #define MAX_REAL_DLIGHTS	(MAX_DLIGHTS*2)
 #define MAX_LITSURFS		(MAX_DRAWSURFS)
 
 #define MAX_TEXTURE_SIZE	2048 // must be less or equal to 32768
 
+#define USE_VBO
 #define USE_TESS_NEEDS_NORMAL
 //#define USE_TESS_NEEDS_ST2
+#define USE_FBO
 
 #include "../qcommon/q_shared.h"
 #include "../qcommon/qfiles.h"
 #include "../qcommon/qcommon.h"
 #include "../renderercommon/tr_public.h"
 #include "tr_common.h"
-#include "iqm.h"
+#include "../renderercommon/iqm.h"
 #include "qgl.h"
 
 #define GL_INDEX_TYPE		GL_UNSIGNED_INT
@@ -1506,8 +1508,10 @@ extern glstate_t glState;           // outside of TR since it shouldn't be clear
 
 extern glstatic_t gls;
 
+#ifdef USE_FBO
 extern	qboolean			windowAdjusted;
 extern	qboolean			superSampled;
+#endif
 
 //
 // cvars
@@ -1543,7 +1547,10 @@ extern cvar_t	*r_dlightScale;			// 0.1 - 1.0
 extern cvar_t	*r_dlightIntensity;		// 0.1 - 1.0
 #endif
 extern cvar_t	*r_dlightSaturation;	// 0.0 - 1.0
+#ifdef USE_VBO
 extern cvar_t	*r_vbo;
+#endif
+#ifdef USE_FBO
 extern cvar_t	*r_fbo;
 extern cvar_t	*r_hdr;
 extern cvar_t	*r_bloom;
@@ -1559,6 +1566,7 @@ extern cvar_t	*r_bloom_reflection;
 extern cvar_t	*r_renderWidth;
 extern cvar_t	*r_renderHeight;
 extern cvar_t	*r_renderScale;
+#endif // USE_FBO
 
 //extern cvar_t	*r_dlightBacks;			// dlight non-facing surfaces for continuity
 
@@ -1952,13 +1960,16 @@ void R_ComputeTexCoords( const int b, const textureBundle_t *bundle );
 
 void QGL_InitARB( void );
 void QGL_DoneARB( void );
+#ifdef USE_FBO
 void QGL_InitFBO( void );
+#endif
 qboolean ARB_UpdatePrograms( void );
 
 qboolean GL_ProgramAvailable( void );
 void GL_ProgramDisable( void );
 void GL_ProgramEnable( void );
 
+#ifdef USE_FBO
 extern qboolean		fboEnabled;
 extern qboolean		blitMSfbo;
 
@@ -1969,6 +1980,7 @@ void FBO_BlitSS( void );
 qboolean FBO_Bloom( const float gamma, const float obScale, qboolean finalPass );
 void FBO_CopyScreen( void );
 GLuint FBO_ScreenTexture( void );
+#endif //  USE_FBO
 
 /*
 ============================================================
@@ -2260,7 +2272,9 @@ typedef enum {
 	RC_DRAW_SURFS,
 	RC_DRAW_BUFFER,
 	RC_SWAP_BUFFERS,
+#ifdef USE_FBO
 	RC_FINISHBLOOM,
+#endif
 	RC_COLORMASK,
 	RC_CLEARDEPTH,
 	RC_CLEARCOLOR,
@@ -2466,7 +2480,7 @@ qboolean R_inPVS( const vec3_t p1, const vec3_t p2 );
 #undef GLE
 
 // VBO functions
-
+#ifdef USE_VBO
 extern void RB_StageIteratorVBO( void );
 extern void R_BuildWorldVBO( msurface_t *surf, int surfCount );
 
@@ -2478,6 +2492,7 @@ extern void VBO_Cleanup( void );
 extern void VBO_QueueItem( int itemIndex );
 extern void VBO_ClearQueue( void );
 extern void VBO_Flush( void );
+#endif
 
 // ARB shaders definitions
 
@@ -2520,6 +2535,7 @@ typedef enum {
 	DLIGHT_DIRECTIONAL_ABS_FRAGMENT_FOG,
 #endif
 	SPRITE_FRAGMENT,
+#ifdef USE_FBO
 	GAMMA_FRAGMENT,
 	BLOOM_EXTRACT_FRAGMENT,
 	BLUR_FRAGMENT,
@@ -2527,7 +2543,7 @@ typedef enum {
 	BLENDX_FRAGMENT,
 	BLEND2_FRAGMENT,
 	BLEND2_GAMMA_FRAGMENT,
-
+#endif
 	PROGRAM_COUNT
 
 } programNum;

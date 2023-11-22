@@ -374,27 +374,29 @@ ProjectDlightTexture
 Perform dynamic lighting with another rendering pass
 ===================
 */
-static void ProjectDlightTexture_scalar( void ) {
-	int		i, l;
+#ifdef USE_VULKAN
+static qboolean ProjectDlightTexture( void ) {
+#else
+static void ProjectDlightTexture( void ) {
+#endif
+	int i, l, a, b, c, color, *intColors;
 	vec3_t	origin;
-	float	*texCoords;
 	byte	*colors;
-	byte	clipBits[SHADER_MAX_VERTEXES];
 #ifdef USE_VULKAN
 	uint32_t pipeline;
-#else
-	float	texCoordsArray[SHADER_MAX_VERTEXES][2];
-	byte	colorArray[SHADER_MAX_VERTEXES][4];
+	qboolean rebindIndex = qfalse;
 #endif
-	glIndex_t hitIndexes[SHADER_MAX_INDEXES];
-	int		numIndexes;
-	float	scale;
-	float	radius;
-	float	modulate = 0.0f;
-	const dlight_t *dl;
+	float radius, radiusInverseCubed;
+	float intensity, remainder, modulate = 0.0f;
+	vec3_t floatColor, dir;
+	const dlight_t    *dl;
 
 	if ( !backEnd.refdef.num_dlights ) {
+#ifdef USE_VULKAN
+		return rebindIndex;
+#else
 		return;
+#endif
 	}
 
 	for ( l = 0 ; l < backEnd.refdef.num_dlights ; l++ ) {
@@ -403,71 +405,73 @@ static void ProjectDlightTexture_scalar( void ) {
 			continue;	// this surface definitely doesn't have any of this light
 		}
 
-#ifdef USE_VULKAN
-		texCoords = (float*)&tess.svars.texcoords[0][0];
-		tess.svars.texcoordPtr[0] = tess.svars.texcoords[0];
-		colors = tess.svars.colors[0][0].rgba;
-#else
-		texCoords = texCoordsArray[0];
-		colors = colorArray[0];
-#endif
+		// clear colors
+		Com_Memset( tess.svars.colors, 0, sizeof( tess.svars.colors ) );
 
+		// setup
 		dl = &backEnd.refdef.dlights[l];
 		VectorCopy( dl->transformed, origin );
 		radius = dl->radius;
-		scale = 1.0f / radius;
+		radiusInverseCubed = dl->radiusInverseCubed;
+		intensity = dl->intensity;
+		floatColor[ 0 ] = dl->color[ 0 ] * 255.0f;
+		floatColor[ 1 ] = dl->color[ 1 ] * 255.0f;
+		floatColor[ 2 ] = dl->color[ 2 ] * 255.0f;
 
-		for ( i = 0 ; i < tess.numVertexes ; i++, texCoords += 2, colors += 4 ) {
-			int		clip = 0;
-			vec3_t	dist;
+		// directional lights have max intensity and washout remainder intensity
+		if ( dl->flags & REF_DIRECTED_DLIGHT ) {
+			remainder = intensity * 0.125;
+		} else {
+			remainder = 0.0f;
+		}
 
-			VectorSubtract( origin, tess.xyz[i], dist );
-
+		colors = tess.svars.colors[0][0].rgba;
+		for ( i = 0 ; i < tess.numVertexes ; i++, colors += 4 )
+		{
 			backEnd.pc.c_dlightVertexes++;
 
-			texCoords[0] = 0.5f + dist[0] * scale;
-			texCoords[1] = 0.5f + dist[1] * scale;
-
-			if ( 0/*!r_dlightBacks->integer*/ &&
-					// dist . tess.normal[i]
-					( dist[0] * tess.normal[i][0] +
-					dist[1] * tess.normal[i][1] +
-					dist[2] * tess.normal[i][2] ) < 0.0f ) {
-				clip = 63;
-			} else {
-				if ( texCoords[0] < 0.0f ) {
-					clip |= 1;
-				} else if ( texCoords[0] > 1.0f ) {
-					clip |= 2;
+			// directional dlight, origin is a directional normal
+			if ( dl->flags & REF_DIRECTED_DLIGHT ) {
+				// twosided surfaces use absolute value of the calculated lighting
+				modulate = intensity * DotProduct( dl->origin, tess.normal[ i ] );
+				if ( tess.shader->cullType == CT_TWO_SIDED ) {
+					modulate = fabs( modulate );
 				}
-				if ( texCoords[1] < 0.0f ) {
-					clip |= 4;
-				} else if ( texCoords[1] > 1.0f ) {
-					clip |= 8;
-				}
-
-				// modulate the strength based on the height and color
-				if ( dist[2] > radius ) {
-					clip |= 16;
-					modulate = 0.0f;
-				} else if ( dist[2] < -radius ) {
-					clip |= 32;
-					modulate = 0.0f;
-				} else {
-					//*((int*)&dist[2]) &= 0x7FFFFFFF;
-					dist[2] = fabsf( dist[2] );
-					if ( dist[2] < radius * 0.5f ) {
-						modulate = 1.0 * 255.0;
-					} else {
-						modulate = 2.0f * (radius - dist[2]) * scale * 255.0;
-					}
-				}
+				modulate += remainder;
 			}
-			clipBits[i] = clip;
-			colors[0] = dl->color[0] * modulate;
-			colors[1] = dl->color[1] * modulate;
-			colors[2] = dl->color[2] * modulate;
-			colors[3] = 255;
+			// ball dlight
+			else
+			{
+				dir[ 0 ] = radius - fabs( origin[ 0 ] - tess.xyz[ i ][ 0 ] );
+				if ( dir[ 0 ] <= 0.0f ) {
+					continue;
+				}
+				dir[ 1 ] = radius - fabs( origin[ 1 ] - tess.xyz[ i ][ 1 ] );
+				if ( dir[ 1 ] <= 0.0f ) {
+					continue;
+				}
+				dir[ 2 ] = radius - fabs( origin[ 2 ] - tess.xyz[ i ][ 2 ] );
+				if ( dir[ 2 ] <= 0.0f ) {
+					continue;
+				}
+
+				modulate = intensity * dir[ 0 ] * dir[ 1 ] * dir[ 2 ] * radiusInverseCubed;
+			}
+
+			// optimizations
+			if ( modulate < ( 1.0f / 128.0f ) ) {
+				continue;
+			} else if ( modulate > 1.0f ) {
+				modulate = 1.0f;
+			}
+
+			// set color
+			color = Q_ftol( floatColor[ 0 ] * modulate );
+			colors[ 0 ] = color > 255 ? 255 : color;
+			color = Q_ftol( floatColor[ 1 ] * modulate );
+			colors[ 1 ] = color > 255 ? 255 : color;
+			color = Q_ftol( floatColor[ 2 ] * modulate );
+			colors[ 2 ] = color > 255 ? 255 : color;
 		}
 
 		// build a list of triangles that need light
@@ -487,7 +491,7 @@ static void ProjectDlightTexture_scalar( void ) {
 			numIndexes += 3;
 		}
 
-		if ( !numIndexes ) {
+		if ( numIndexes == 0 ) {
 			continue;
 		}
 
@@ -502,7 +506,11 @@ static void ProjectDlightTexture_scalar( void ) {
 		GL_Bind( tr.dlightImage );
 
 #ifdef USE_VULKAN
-		pipeline = vk.dlight_pipelines[dl->additive > 0 ? 1 : 0][tess.shader->cullType][tess.shader->polygonOffset];
+		if ( numIndexes != tess.numIndexes ) {
+			// re-bind index buffer for later fog pass
+			rebindIndex = qtrue;
+		}
+		pipeline = vk.dlight_pipelines[/*dl->additive > 0 ? 1 :*/ 0][tess.shader->cullType][tess.shader->polygonOffset];
 		vk_bind_pipeline( pipeline );
 		vk_bind_index_ext( numIndexes, hitIndexes );
 		vk_bind_geometry( TESS_RGBA0 | TESS_ST0 );
@@ -511,23 +519,23 @@ static void ProjectDlightTexture_scalar( void ) {
 		// include GLS_DEPTHFUNC_EQUAL so alpha tested surfaces don't add light
 		// where they aren't rendered
 
-		if ( dl->additive ) {
-			GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );
-		} else {
+		//if ( dl->additive ) {
+		//	GL_State( GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );
+		//} else {
 			GL_State( GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ONE | GLS_DEPTHFUNC_EQUAL );
-		}
+		//}
 
 		R_DrawElements( numIndexes, hitIndexes );
 #endif
 		backEnd.pc.c_totalIndexes += numIndexes;
 		backEnd.pc.c_dlightIndexes += numIndexes;
 	}
+
+#ifdef USE_VULKAN
+	return rebindIndex;
+#endif
 }
 
-
-static void ProjectDlightTexture( void ) {
-	ProjectDlightTexture_scalar();
-}
 #endif // USE_LEGACY_DLIGHTS
 
 uint32_t VK_PushUniform( const vkUniform_t *uniform );
@@ -541,23 +549,34 @@ RB_FogPass
 Blends a fog texture on top of everything else
 ===================
 */
-static void RB_FogPass( void ) {
 #ifdef USE_VULKAN
+static void RB_FogPass( qboolean rebindIndex ) {
 	uint32_t pipeline = vk.fog_pipelines[tess.shader->fogPass - 1][tess.shader->cullType][tess.shader->polygonOffset];
 #ifdef USE_FOG_ONLY
 	int fog_stage;
 
+	// no fog pass in snooper
+	if ( (tr.refdef.rdflags & RDF_SNOOPERVIEW) || tess.shader->noFog || !r_wolffog->integer ) {
+		return;
+	}
+
+	// ydnar: no world, no fogging
+	if ( backEnd.refdef.rdflags & RDF_NOWORLDMODEL ) {
+		return;
+	}
+
 	// fog parameters
 	vk_bind_pipeline( pipeline );
+	if ( rebindIndex ) {
+		vk_bind_index();
+	}
 	VK_SetFogParams( &uniform, &fog_stage );
 	VK_PushUniform( &uniform );
 	vk_update_descriptor( 3, tr.fogImage->descriptor );
 	vk_draw_geometry( DEPTH_RANGE_NORMAL, qtrue );
 #else
-	const fog_t	*fog;
-	int			i;
-
-	fog = tr.world->fogs + tess.fogNum;
+	const fog_t	*fog = tr.world->fogs + tess.fogNum;
+	int	i;
 
 	for ( i = 0; i < tess.numVertexes; i++ ) {
 		tess.svars.colors[0][i].u32 = fog->colorInt.u32;
@@ -568,10 +587,14 @@ static void RB_FogPass( void ) {
 	GL_Bind( tr.fogImage );
 
 	vk_bind_pipeline( pipeline );
+	if ( rebindIndex ) {
+		vk_bind_index();
+	}
 	vk_bind_geometry( TESS_ST0 | TESS_RGBA0 );
 	vk_draw_geometry( DEPTH_RANGE_NORMAL, qtrue );
 #endif
 #else
+static void RB_FogPass( void ) {
 	const fog_t	*fog;
 	int			i;
 
@@ -606,7 +629,7 @@ void R_ComputeColors( const int b, color4ub_t *dest, const shaderStage_t *pStage
 {
 	int		i;
 
-	if ( !tess.numVertexes )
+	if ( tess.numVertexes == 0 )
 		return;
 
 	//
@@ -670,9 +693,7 @@ void R_ComputeColors( const int b, color4ub_t *dest, const shaderStage_t *pStage
 			break;
 		case CGEN_FOG:
 			{
-				const fog_t *fog;
-
-				fog = tr.world->fogs + tess.fogNum;
+				const fog_t *fog = tr.world->fogs + tess.fogNum;
 
 				for ( i = 0; i < tess.numVertexes; i++ ) {
 					dest[i].u32 = fog->parms.colorInt;
@@ -965,25 +986,28 @@ static void RB_IterateStagesGeneric( const shaderCommands_t *input )
 #ifdef USE_VULKAN
 	uint32_t pipeline;
 	int fog_stage;
+	qboolean pushUniform;
 
 	vk_bind_index();
 
 	tess_flags = input->shader->tessFlags;
 
+	pushUniform = qfalse;
+
 #ifdef USE_FOG_COLLAPSE
 	if ( fogCollapse ) {
 		VK_SetFogParams( &uniform, &fog_stage );
 		VectorCopy( backEnd.orientation.viewOrigin, uniform.eyePos );
-		VK_PushUniform( &uniform );
 		vk_update_descriptor( 5, tr.fogImage->descriptor );
+		pushUniform = qtrue;
 	} else
 #endif
 	{
 		fog_stage = 0;
 		if ( tess_flags & TESS_VPOS ) {
 			VectorCopy( backEnd.orientation.viewOrigin, uniform.eyePos );
-			VK_PushUniform( &uniform );
 			tess_flags &= ~TESS_VPOS;
+			pushUniform = qtrue;
 		}
 	}
 #endif // USE_VULKAN
@@ -1011,19 +1035,32 @@ static void RB_IterateStagesGeneric( const shaderCommands_t *input )
 				if ( tess_flags & ( TESS_RGBA0 << i ) ) {
 					R_ComputeColors( i, tess.svars.colors[i], pStage );
 				}
+				if ( tess_flags & (TESS_ENT0 << i) && backEnd.currentEntity ) {
+					uniform.ent.color[i][0] = backEnd.currentEntity->e.shader.rgba[0] / 255.0;
+					uniform.ent.color[i][1] = backEnd.currentEntity->e.shader.rgba[1] / 255.0;
+					uniform.ent.color[i][2] = backEnd.currentEntity->e.shader.rgba[2] / 255.0;
+					uniform.ent.color[i][3] = pStage->bundle[i].alphaGen == AGEN_IDENTITY ? 1.0 : (backEnd.currentEntity->e.shader.rgba[3] / 255.0);
+					pushUniform = qtrue;
+				}
 			}
+		}
+
+		if ( pushUniform ) {
+			pushUniform = qfalse;
+			VK_PushUniform( &uniform );
 		}
 
 		GL_SelectTexture( 0 );
 
-		if ( backEnd.viewParms.portalView == PV_MIRROR )
-			pipeline = pStage->vk_mirror_pipeline[ fog_stage ];
-		else
-			pipeline = pStage->vk_pipeline[ fog_stage ];
-
 		if ( r_lightmap->integer && pStage->bundle[1].isLightmap ) {
 			//GL_SelectTexture( 0 );
 			GL_Bind( tr.whiteImage ); // replace diffuse texture with a white one thus effectively render only lightmap
+		}
+
+		if ( backEnd.viewParms.portalView == PV_MIRROR ) {
+			pipeline = pStage->vk_mirror_pipeline[fog_stage];
+		} else {
+			pipeline = pStage->vk_pipeline[fog_stage];
 		}
 
 		vk_bind_pipeline( pipeline );
@@ -1086,6 +1123,9 @@ static void RB_IterateStagesGeneric( const shaderCommands_t *input )
 	}
 
 #ifdef USE_VULKAN
+	if ( pushUniform ) {
+		VK_PushUniform( &uniform );
+	}
 	if ( tess_flags ) // fog-only shaders?
 		vk_bind_geometry( tess_flags );
 #endif
@@ -1125,25 +1165,25 @@ static void VK_SetLightParams( vkUniform_t *uniform, const dlight_t *dl ) {
 #else
 	if ( !glConfig.deviceSupportsGamma )
 #endif
-		VectorScale( dl->color, 2 * powf( r_intensity->value, r_gamma->value ), uniform->lightColor);
+		VectorScale( dl->color, 2 * powf( r_intensity->value, r_gamma->value ), uniform->light.color);
 	else
-		VectorCopy( dl->color, uniform->lightColor );
+		VectorCopy( dl->color, uniform->light.color );
 
 	radius = dl->radius;
 
 	// vertex data
 	VectorCopy( backEnd.orientation.viewOrigin, uniform->eyePos ); uniform->eyePos[3] = 0.0f;
-	VectorCopy( dl->transformed, uniform->lightPos ); uniform->lightPos[3] = 0.0f;
+	VectorCopy( dl->transformed, uniform->light.pos ); uniform->light.pos[3] = 0.0f;
 
 	// fragment data
-	uniform->lightColor[3] = 1.0f / Square( radius );
+	uniform->light.color[3] = 1.0f / Square( radius );
 
 	if ( dl->linear )
 	{
 		vec4_t ab;
 		VectorSubtract( dl->transformed2, dl->transformed, ab );
 		ab[3] = 1.0f / DotProduct( ab, ab );
-		Vector4Copy( ab, uniform->lightVector );
+		Vector4Copy( ab, uniform->light.vector );
 	}
 }
 #endif
@@ -1237,6 +1277,9 @@ void VK_LightingPass( void )
 
 void RB_StageIteratorGeneric( void )
 {
+#ifdef USE_VULKAN
+	qboolean rebindIndex = qfalse;
+#endif
 	qboolean fogCollapse = qfalse;
 
 #ifdef USE_VBO
@@ -1273,14 +1316,22 @@ void RB_StageIteratorGeneric( void )
 #endif
 	if ( tess.dlightBits && tess.shader->sort <= SS_OPAQUE && !(tess.shader->surfaceFlags & (SURF_NODLIGHT | SURF_SKY) ) ) {
 		if ( !fogCollapse ) {
+#ifdef USE_VULKAN
+			rebindIndex = ProjectDlightTexture();
+#else	
 			ProjectDlightTexture();
+#endif
 		}
 	}
 #endif // USE_LEGACY_DLIGHTS
 
 	// now do fog
 	if ( tess.fogNum && tess.shader->fogPass && !fogCollapse ) {
+#ifdef USE_VULKAN
+		RB_FogPass( rebindIndex );
+#else
 		RB_FogPass();
+#endif
 	}
 }
 

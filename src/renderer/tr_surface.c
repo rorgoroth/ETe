@@ -179,7 +179,9 @@ void RB_AddQuadStampExt( const vec3_t origin, const vec3_t left, const vec3_t up
 	vec3_t		normal;
 	int			ndx;
 
+#ifdef USE_VBO
 	VBO_Flush();
+#endif
 
 	RB_CHECKOVERFLOW( 4, 6 );
 
@@ -250,7 +252,9 @@ void RB_AddQuadStamp2( float x, float y, float w, float h, float s1, float t1, f
 	int			numIndexes;
 	int			numVerts;
 
+#ifdef USE_VBO
 	VBO_Flush();
+#endif
 
 	RB_CHECKOVERFLOW( 4, 6 );
 
@@ -375,11 +379,13 @@ static void RB_SurfaceSprite( void ) {
 RB_SurfacePolychain
 =============
 */
-static void RB_SurfacePolychain( srfPoly_t *p ) {
+static void RB_SurfacePolychain( const srfPoly_t *p ) {
 	int		i;
 	int		numv;
 
+#ifdef USE_VBO
 	VBO_Flush();
+#endif
 
 	RB_CHECKOVERFLOW( p->numVerts, 3*(p->numVerts - 2) );
 
@@ -413,9 +419,9 @@ static void RB_SurfacePolychain( srfPoly_t *p ) {
 RB_SurfaceTriangles
 =============
 */
-static void RB_SurfaceTriangles( srfTriangles_t *srf ) {
+static void RB_SurfaceTriangles( const srfTriangles_t *srf ) {
 	int			i;
-	drawVert_t	*dv;
+	const drawVert_t	*dv;
 	float		*xyz, *normal;
 	float		*texCoords0;
 	float		*texCoords1;
@@ -424,6 +430,7 @@ static void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 	int			dlightBits;
 #endif
 
+#ifdef USE_VBO
 #ifdef USE_LEGACY_DLIGHTS
 	if ( tess.allowVBO && srf->vboItemIndex && !srf->dlightBits ) {
 #else
@@ -445,6 +452,7 @@ static void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 	}
 
 	VBO_Flush();
+#endif // USE_VBO
 
 	// ydnar: moved before overflow so dlights work properly
 	RB_CHECKOVERFLOW( srf->numVerts, srf->numIndexes );
@@ -509,7 +517,7 @@ RB_SurfaceFoliage - ydnar
 =============
 */
 
-void RB_SurfaceFoliage( srfFoliage_t *srf ) {
+void RB_SurfaceFoliage( const srfFoliage_t *srf ) {
 	int o, i;// , numVerts, numIndexes;
 #ifdef USE_DISTANCE_CULL
 	int a;
@@ -524,6 +532,7 @@ void RB_SurfaceFoliage( srfFoliage_t *srf ) {
 	int dlightBits;
 	const foliageInstance_t   *instance;
 
+#ifdef USE_VBO
 #ifdef USE_LEGACY_DLIGHTS
 	if ( tess.allowVBO && srf->vboItemIndex && !srf->dlightBits ) {
 #else
@@ -543,6 +552,7 @@ void RB_SurfaceFoliage( srfFoliage_t *srf ) {
 		VBO_QueueItem( srf->vboItemIndex );
 		return; // no need to tesselate anything
 	}
+#endif
 
 #ifdef USE_DISTANCE_CULL
 	VectorCopy( backEnd.orientation.viewOrigin, viewOrigin );
@@ -570,7 +580,9 @@ void RB_SurfaceFoliage( srfFoliage_t *srf ) {
 	}
 #endif
 
+#ifdef USE_VBO
 	VBO_Flush();
+#endif
 
 	// set dlight bits
 	dlightBits = srf->dlightBits;

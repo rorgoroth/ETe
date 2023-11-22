@@ -63,7 +63,6 @@ extern glconfig_t	glConfig;		// outside of TR since it shouldn't be cleared duri
 // compatibility issues to the original ID vms.  If you release a stand-alone
 // game and your mod uses tr_types.h from this build you can safely move them
 // to the glconfig_t struct.
-extern qboolean  nonPowerOfTwoTextures;
 extern int       gl_version;
 //
 // cvars
@@ -74,8 +73,10 @@ extern cvar_t *r_texturebits;			// number of desired texture bits
 										// 16 = use 16-bit textures
 										// 32 = use 32-bit textures
 										// all else = error
+#ifdef USE_FBO
 extern cvar_t *r_ext_multisample;
 extern cvar_t *r_ext_supersample;
+#endif
 
 extern cvar_t *r_drawBuffer;
 

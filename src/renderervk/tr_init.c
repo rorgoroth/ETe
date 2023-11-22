@@ -24,7 +24,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #include "tr_local.h"
 
 glconfig_t	glConfig;
-qboolean	nonPowerOfTwoTextures;
 int			gl_version;
 int			gl_clamp_mode;	// GL_CLAMP or GL_CLAMP_TO_EGGE
 
@@ -84,6 +83,8 @@ cvar_t	*r_hdr;
 cvar_t	*r_bloom;
 cvar_t	*r_bloom_threshold;
 cvar_t	*r_bloom_intensity;
+cvar_t	*r_bloom_threshold_mode;
+cvar_t	*r_bloom_modulate;
 cvar_t	*r_renderWidth;
 cvar_t	*r_renderHeight;
 cvar_t	*r_renderScale;
@@ -272,9 +273,9 @@ static void R_ClearSymTables( void )
 
 // for modular renderer
 #ifdef USE_RENDERER_DLOPEN
-void QDECL Com_Error( errorParm_t code, const char *fmt, ... )
+void FORMAT_PRINTF(2,3) QDECL Com_Error( errorParm_t code, const char *fmt, ... )
 {
-	char buf[ 4096 ];
+	char buf[ MAXPRINTMSG ];
 	va_list	argptr;
 	va_start( argptr, fmt );
 	Q_vsnprintf( buf, sizeof( buf ), fmt, argptr );
@@ -282,7 +283,7 @@ void QDECL Com_Error( errorParm_t code, const char *fmt, ... )
 	ri.Error( code, "%s", buf );
 }
 
-void QDECL Com_Printf( const char *fmt, ... )
+void FORMAT_PRINTF(1,2) QDECL Com_Printf( const char *fmt, ... )
 {
 	char buf[ MAXPRINTMSG ];
 	va_list	argptr;
@@ -381,8 +382,6 @@ static void R_InitExtensions( void )
 
 	glConfig.anisotropicAvailable = qfalse;
 	glConfig.maxAnisotropy = 0;
-
-	nonPowerOfTwoTextures = qfalse;
 
 	qglLockArraysEXT = NULL;
 	qglUnlockArraysEXT = NULL;
@@ -1847,6 +1846,7 @@ static void R_Register( void )
 	ri.Cvar_SetDescription( r_finish, "Force a glFinish call after rendering a scene" );
 	r_textureMode = ri.Cvar_Get( "r_textureMode", "GL_LINEAR_MIPMAP_NEAREST", CVAR_ARCHIVE );
 	ri.Cvar_SetDescription( r_textureMode, "Texture interpolation mode:\n GL_NEAREST: Nearest neighbor interpolation and will therefore appear similar to Quake II except with the added colored lighting\n GL_LINEAR: Linear interpolation and will appear to blend in objects that are closer than the resolution that the textures are set as\n GL_NEAREST_MIPMAP_NEAREST: Nearest neighbor interpolation with mipmapping for bilinear hardware, mipmapping will blend objects that are farther away than the resolution that they are set as\n GL_LINEAR_MIPMAP_NEAREST: Linear interpolation with mipmapping for bilinear hardware\n GL_NEAREST_MIPMAP_LINEAR: Nearest neighbor interpolation with mipmapping for trilinear hardware\n GL_LINEAR_MIPMAP_LINEAR: Linear interpolation with mipmapping for trilinear hardware" );
+	ri.Cvar_SetGroup( r_textureMode, CVG_RENDERER );
 #if defined(__APPLE__) || defined(__APPLE_CC__)
 	r_gamma = ri.Cvar_Get( "r_gamma", "1.2", CVAR_ARCHIVE_ND );
 #else
@@ -1854,6 +1854,7 @@ static void R_Register( void )
 #endif
 	ri.Cvar_CheckRange( r_gamma, "0.5", "3", CV_FLOAT );
 	ri.Cvar_SetDescription( r_gamma, "Gamma correction factor" );
+	ri.Cvar_SetGroup( r_gamma, CVG_RENDERER );
 	r_facePlaneCull = ri.Cvar_Get ("r_facePlaneCull", "1", CVAR_ARCHIVE_ND );
 	ri.Cvar_SetDescription( r_facePlaneCull, "Enables culling of planar surfaces with back side test" );
 
@@ -1875,10 +1876,12 @@ static void R_Register( void )
 	r_greyscale = ri.Cvar_Get( "r_greyscale", "0", CVAR_ARCHIVE_ND );
 	ri.Cvar_CheckRange( r_greyscale, "-1", "1", CV_FLOAT );
 	ri.Cvar_SetDescription( r_greyscale, "Desaturate rendered frame, requires \\r_fbo 1" );
+	ri.Cvar_SetGroup( r_greyscale, CVG_RENDERER );
 
 	r_dither = ri.Cvar_Get( "r_dither", "0", CVAR_ARCHIVE_ND );
 	ri.Cvar_CheckRange( r_dither, "0", "1", CV_INTEGER );
 	ri.Cvar_SetDescription(r_dither, "Set dithering mode:\n 0 - disabled\n 1 - ordered\nRequires " S_COLOR_CYAN "\\r_fbo 1" );
+	ri.Cvar_SetGroup( r_dither, CVG_RENDERER );
 
 	r_presentBits = ri.Cvar_Get( "r_presentBits", "24", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	ri.Cvar_CheckRange( r_presentBits, "16", "30", CV_INTEGER );
@@ -1989,6 +1992,23 @@ static void R_Register( void )
 	ri.Cvar_SetDescription( r_aviMotionJpegQuality, "Controls quality of Jpeg video capture when \\cl_aviMotionJpeg 1" );
 	r_screenshotJpegQuality = ri.Cvar_Get( "r_screenshotJpegQuality", "90", CVAR_ARCHIVE_ND );
 	ri.Cvar_SetDescription( r_screenshotJpegQuality, "Controls quality of Jpeg screenshots when using screenshotJpeg" );
+
+	r_bloom_threshold = ri.Cvar_Get( "r_bloom_threshold", "0.6", CVAR_ARCHIVE_ND );
+	ri.Cvar_SetDescription( r_bloom_threshold, "Color level to extract to bloom texture, default is 0.6." );
+	ri.Cvar_SetGroup( r_bloom_threshold, CVG_RENDERER );
+
+	r_bloom_threshold_mode = ri.Cvar_Get( "r_bloom_threshold_mode", "0", CVAR_ARCHIVE_ND );
+	ri.Cvar_SetDescription( r_bloom_threshold_mode, "Color extraction mode:\n 0: (r|g|b) >= threshold\n 1: (r + g + b ) / 3 >= threshold\n 2: luma(r, g, b) >= threshold" );
+	ri.Cvar_SetGroup( r_bloom_threshold_mode, CVG_RENDERER );
+
+	r_bloom_intensity = ri.Cvar_Get( "r_bloom_intensity", "0.5", CVAR_ARCHIVE_ND );
+	ri.Cvar_SetDescription( r_bloom_intensity, "Final bloom blend factor, default is 0.5." );
+	ri.Cvar_SetGroup( r_bloom_intensity, CVG_RENDERER );
+
+	r_bloom_modulate = ri.Cvar_Get( "r_bloom_modulate", "0", CVAR_ARCHIVE_ND );
+	ri.Cvar_SetDescription( r_bloom_modulate, "Modulate extracted color:\n 0: off (color = color, i.e. no changes)\n 1: by itself (color = color * color)\n 2: by intensity (color = color * luma(color))" );
+	ri.Cvar_SetGroup( r_bloom_modulate, CVG_RENDERER );
+
 	r_highQualityVideo = ri.Cvar_Get( "r_highQualityVideo", "1", CVAR_ARCHIVE );
 
 	r_useFirstPersonEnvMaps = ri.Cvar_Get( "r_useFirstPersonEnvMaps", "1", CVAR_CHEAT );
@@ -2044,14 +2064,7 @@ static void R_Register( void )
 	ri.Cvar_SetDescription(r_hdr, "Enables high dynamic range frame buffer texture format. Requires \\r_fbo 1.\n -1: 4-bit, for testing purposes, heavy color banding, might not work on all systems\n  0: 8 bit, default, moderate color banding with multi-stage shaders\n  1: 16 bit, enhanced blending precision, no color banding, might decrease performance on AMD / Intel GPUs" );
 	r_bloom = ri.Cvar_Get( "r_bloom", "0", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	ri.Cvar_CheckRange( r_bloom, "0", "1", CV_INTEGER );
-
-	r_bloom_threshold = ri.Cvar_Get( "r_bloom_threshold", "0.6", CVAR_ARCHIVE_ND | CVAR_LATCH );
-	ri.Cvar_CheckRange( r_bloom_threshold, "0.01", "1", CV_FLOAT );
-	ri.Cvar_SetDescription(r_bloom_threshold, "Color level to extract to bloom texture" );
-
-	r_bloom_intensity = ri.Cvar_Get( "r_bloom_intensity", "0.5", CVAR_ARCHIVE_ND | CVAR_LATCH );
-	ri.Cvar_CheckRange( r_bloom_intensity, "0.01", "2", CV_FLOAT );
-	ri.Cvar_SetDescription( r_bloom_intensity, "Final bloom blend factor" );
+	ri.Cvar_SetDescription(r_bloom, "Enables bloom post-processing effect. Requires \\r_fbo 1");
 
 	r_ext_multisample = ri.Cvar_Get( "r_ext_multisample", "0", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	ri.Cvar_CheckRange( r_ext_multisample, "0", "64", CV_INTEGER );
@@ -2215,11 +2228,11 @@ RE_Shutdown
 */
 static void RE_Shutdown( refShutdownCode_t code ) {
 #ifdef USE_VULKAN
-	if ( code == REF_KEEP_CONTEXT ) {
-		if ( ( ri.Milliseconds() - gls.initTime ) > 48 * 3600 * 1000 ) {
-			code = REF_KEEP_WINDOW; // destroy context
-		}
-	}
+	//if ( code == REF_KEEP_CONTEXT ) {
+	//	if ( ( ri.Milliseconds() - gls.initTime ) > 48 * 3600 * 1000 ) {
+	//		code = REF_KEEP_WINDOW; // destroy context
+	//	}
+	//}
 #endif
 	ri.Printf( PRINT_ALL, "RE_Shutdown( %i )\n", code );
 
@@ -2255,26 +2268,23 @@ static void RE_Shutdown( refShutdownCode_t code ) {
 
 	R_DoneFreeType();
 
+#ifdef USE_VULKAN
+	if ( r_device->modified ) {
+		code = REF_UNLOAD_DLL;
+	}
+#endif
+
 	// shut down platform specific OpenGL/Vulkan stuff
 	if ( code != REF_KEEP_CONTEXT ) {
 #ifdef USE_VULKAN
-		vk_shutdown();
+		vk_shutdown( code );
 
 		Com_Memset( &glState, 0, sizeof( glState ) );
-
-		if ( r_device->modified ) {
-			code = REF_UNLOAD_DLL;
-		}
 
 		if ( code != REF_KEEP_WINDOW ) {
 			ri.VKimp_Shutdown( code == REF_UNLOAD_DLL ? qtrue : qfalse );
 			Com_Memset( &glConfig, 0, sizeof( glConfig ) );
 		}
-
-		// Ridah, release the virtual memory
-		R_Hunk_End();
-		R_FreeImageBuffer();
-		ri.Tag_Free();  // wipe all render alloc'd zone memory
 #else
 		R_ClearSymTables();
 		Com_Memset( &glState, 0, sizeof( glState ) );
@@ -2283,12 +2293,11 @@ static void RE_Shutdown( refShutdownCode_t code ) {
 			ri.GLimp_Shutdown( code == REF_UNLOAD_DLL ? qtrue : qfalse );
 			Com_Memset( &glConfig, 0, sizeof( glConfig ) );
 		}
-
+#endif
 		// Ridah, release the virtual memory
 		R_Hunk_End();
 		R_FreeImageBuffer();
 		ri.Tag_Free();  // wipe all render alloc'd zone memory
-#endif
 	}
 
 	tr.registered = qfalse;

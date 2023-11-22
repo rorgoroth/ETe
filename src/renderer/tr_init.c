@@ -30,7 +30,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "tr_local.h"
 
 glconfig_t	glConfig;
-qboolean	nonPowerOfTwoTextures;
 int			gl_version;
 int			gl_clamp_mode;	// GL_CLAMP or GL_CLAMP_TO_EGGE
 
@@ -75,9 +74,15 @@ cvar_t	*r_dlightSpecPower;
 cvar_t	*r_dlightSpecColor;
 cvar_t	*r_dlightScale;
 cvar_t	*r_dlightIntensity;
-#endif
+#endif // USE_PMLIGHT
+
 cvar_t	*r_dlightSaturation;
+
+#ifdef USE_VBO
 cvar_t	*r_vbo;
+#endif
+
+#ifdef USE_FBO
 cvar_t	*r_fbo;
 cvar_t	*r_hdr;
 cvar_t	*r_bloom;
@@ -93,6 +98,7 @@ cvar_t	*r_bloom_reflection;
 cvar_t	*r_renderWidth;
 cvar_t	*r_renderHeight;
 cvar_t	*r_renderScale;
+#endif // USE_FBO
 
 //cvar_t	*r_dlightBacks;
 
@@ -131,8 +137,11 @@ cvar_t	*r_ignoreGLErrors;
 
 cvar_t	*r_stencilbits;
 cvar_t	*r_texturebits;
+
+#ifdef USE_FBO
 cvar_t	*r_ext_multisample;
 cvar_t	*r_ext_supersample;
+#endif // USE_FBO
 
 cvar_t	*r_drawBuffer;
 cvar_t	*r_lightmap;
@@ -283,9 +292,9 @@ static void R_ClearSymTables( void )
 
 // for modular renderer
 #ifdef USE_RENDERER_DLOPEN
-void QDECL Com_Error( errorParm_t code, const char *fmt, ... )
+void FORMAT_PRINTF(2,3) QDECL Com_Error( errorParm_t code, const char *fmt, ... )
 {
-	char buf[ 4096 ];
+	char buf[ MAXPRINTMSG ];
 	va_list	argptr;
 	va_start( argptr, fmt );
 	Q_vsnprintf( buf, sizeof( buf ), fmt, argptr );
@@ -293,7 +302,7 @@ void QDECL Com_Error( errorParm_t code, const char *fmt, ... )
 	ri.Error( code, "%s", buf );
 }
 
-void QDECL Com_Printf( const char *fmt, ... )
+void FORMAT_PRINTF(1,2) QDECL Com_Printf( const char *fmt, ... )
 {
 	char buf[ MAXPRINTMSG ];
 	va_list	argptr;
@@ -389,8 +398,6 @@ static void R_InitExtensions( void )
 
 	glConfig.anisotropicAvailable = qfalse;
 	glConfig.maxAnisotropy = 0;
-
-	nonPowerOfTwoTextures = qfalse;
 
 	qglLockArraysEXT = NULL;
 	qglUnlockArraysEXT = NULL;
@@ -658,6 +665,7 @@ static void R_InitExtensions( void )
 		}
 	}
 
+#ifdef USE_VBO
 	if ( R_HaveExtension( "ARB_vertex_buffer_object" ) && qglActiveTextureARB )
 	{
 		err = R_ResolveSymbols( vbo_procs, ARRAY_LEN( vbo_procs ) );
@@ -671,7 +679,9 @@ static void R_InitExtensions( void )
 			ri.Printf( PRINT_ALL, "...using ARB vertex buffer objects\n" );
 		}
 	}
+#endif // USE_VBO
 
+#ifdef USE_FBO
 	if ( R_HaveExtension( "GL_EXT_framebuffer_object" ) && R_HaveExtension( "GL_EXT_framebuffer_blit" ) )
 	{
 		err = R_ResolveSymbols( fbo_procs, ARRAY_LEN( fbo_procs ) );
@@ -686,6 +696,7 @@ static void R_InitExtensions( void )
 			R_ResolveSymbols( fbo_opt_procs, ARRAY_LEN( fbo_opt_procs ) );
 		}
 	}
+#endif // USE_FBO
 
 	//ri.Cvar_Set( "r_highQualityVideo", "1" );
 	ri.Cvar_Set( "r_lastValidRenderer", glConfig.renderer_string );
@@ -740,6 +751,7 @@ static void InitOpenGL( void )
 
 		ri.CL_SetScaling( 1.0, gls.captureWidth, gls.captureHeight );
 
+#ifdef USE_FBO
 		if ( r_fbo->integer && qglGenProgramsARB && qglGenFramebuffers )
 		{
 			if ( r_renderScale->integer )
@@ -760,6 +772,7 @@ static void InitOpenGL( void )
 				ri.CL_SetScaling( 2.0, gls.captureWidth, gls.captureHeight );
 			}
 		}
+#endif
 
 		QGL_InitARB();
 
@@ -779,7 +792,9 @@ static void InitOpenGL( void )
 	}
 	else
 	{
+#ifdef USE_FBO
 		QGL_SetRenderScale( qfalse );
+#endif
 	}
 
 	if ( !qglViewport ) // might happen after REF_KEEP_WINDOW
@@ -1698,8 +1713,11 @@ static void R_Register( void )
 
 	//r_mergeLightmaps = ri.Cvar_Get( "r_mergeLightmaps", "0", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	//ri.Cvar_SetDescription( r_mergeLightmaps, "Merge built-in small lightmaps into bigger lightmaps (atlases)." );
+
+#ifdef USE_VBO
 	r_vbo = ri.Cvar_Get( "r_vbo", "0", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	ri.Cvar_SetDescription( r_vbo, "Use Vertex Buffer Objects to cache static map geometry, may improve FPS on modern GPUs, increases hunk memory usage by 15-30MB (map-dependent)" );
+#endif
 
 	r_mapGreyScale = ri.Cvar_Get( "r_mapGreyScale", "0", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	ri.Cvar_CheckRange( r_mapGreyScale, "-1", "1", CV_FLOAT );
@@ -1768,6 +1786,7 @@ static void R_Register( void )
 	r_dlightSaturation = ri.Cvar_Get( "r_dlightSaturation", "1", CVAR_ARCHIVE_ND );
 	ri.Cvar_CheckRange( r_dlightSaturation, "0", "1", CV_FLOAT );
 
+#ifdef USE_FBO
 	r_ext_multisample = ri.Cvar_Get( "r_ext_multisample", "0", CVAR_ARCHIVE_ND );
 	ri.Cvar_CheckRange( r_ext_multisample, "0", "8", CV_INTEGER );
 	ri.Cvar_SetDescription( r_ext_multisample, "For anti-aliasing geometry edges, valid values: 0|2|4|6|8. Requires \\r_fbo 1" );
@@ -1805,6 +1824,7 @@ static void R_Register( void )
 	r_bloom_reflection = ri.Cvar_Get( "r_bloom_reflection", "0", CVAR_ARCHIVE_ND );
 	ri.Cvar_CheckRange( r_bloom_reflection, "-4", "4", CV_FLOAT );
 	ri.Cvar_SetDescription( r_bloom_reflection, "Bloom lens reflection effect, value is an intensity factor of the effect, negative value means blend only reflection and skip main bloom texture" );
+#endif // USE_FBO
 
 	//r_dlightBacks = ri.Cvar_Get( "r_dlightBacks", "1", CVAR_ARCHIVE_ND );
 	r_finish = ri.Cvar_Get( "r_finish", "0", CVAR_ARCHIVE_ND );
@@ -1989,6 +2009,7 @@ static void R_Register( void )
 	r_flares = ri.Cvar_Get( "r_flares", "1", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	ri.Cvar_SetDescription( r_flares, "Enables corona effects on light sources" );
 
+#ifdef USE_FBO
 	r_fbo = ri.Cvar_Get( "r_fbo", "0", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	ri.Cvar_SetDescription( r_fbo, "Use framebuffer objects, enables gamma correction in windowed mode and allows arbitrary video size and screenshot/video capture.\n Required for bloom, HDR rendering, anti-aliasing and greyscale effects.\n OpenGL 3.0+ required" );
 
@@ -2011,6 +2032,7 @@ static void R_Register( void )
 		" 2 - nearest filtering, preserve aspect ratio (black bars on sides)\n"
 		" 3 - linear filtering, stretch to full size\n"
 		" 4 - linear filtering, preserve aspect ratio (black bars on sides)\n" );
+#endif // USE_FBO
 
 	// Ridah
 	// TTimo show_bug.cgi?id=440
@@ -2172,7 +2194,9 @@ static void RE_Shutdown( refShutdownCode_t code ) {
 
 		QGL_DoneARB();
 
+#ifdef USE_VBO
 		VBO_Cleanup();
+#endif
 
 		R_ClearSymTables();
 

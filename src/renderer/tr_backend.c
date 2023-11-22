@@ -454,7 +454,9 @@ static void RB_Hyperspace( void ) {
 		RB_BeginSurface( tr.whiteShader, 0 );
 	}
 
+#ifdef USE_VBO
 	VBO_UnBind();
+#endif
 
 	RB_SetGL2D();
 
@@ -658,7 +660,9 @@ static void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	int				i;
 	drawSurf_t		*drawSurf;
 	unsigned int	oldSort;
+#ifdef USE_PMLIGHT
 	float			oldShaderSort;
+#endif
 	double			originalTime; // -EC-
 
 	// save original time for entity shader offsets
@@ -671,7 +675,9 @@ static void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	oldDepthRange = qfalse;
 	wasCrosshair = qfalse;
 	oldSort = MAX_UINT;
+#ifdef USE_PMLIGHT
 	oldShaderSort = -1;
+#endif
 	depthRange = qfalse;
 
 	backEnd.pc.c_surfaces += numDrawSurfs;
@@ -1188,14 +1194,18 @@ static const void *RB_StretchPic( const void *data ) {
 		RB_BeginSurface( shader, 0 );
 	}
 
+#ifdef USE_VBO
 	VBO_UnBind();
+#endif
 
 	if ( !backEnd.projection2D ) {
 		RB_SetGL2D();
 	}
 
+#ifdef USE_FBO
 	//Check if it's time for BLOOM!
 	R_BloomScreen();
+#endif
 
 	RB_AddQuadStamp2( cmd->x, cmd->y, cmd->w, cmd->h, cmd->s1, cmd->t1, cmd->s2, cmd->t2, backEnd.color2D );
 
@@ -1209,10 +1219,13 @@ static void RB_LightingPass( void )
 	dlight_t	*dl;
 	int	i;
 
+#ifdef USE_VBO
 	VBO_Flush();
 
-	tess.dlightPass = qtrue;
 	tess.allowVBO = qfalse; // for now
+#endif
+
+	tess.dlightPass = qtrue;
 
 	for ( i = 0; i < backEnd.viewParms.num_dlights; i++ )
 	{
@@ -1248,14 +1261,18 @@ static const void* RB_Draw2dPolys( const void* data ) {
 		RB_BeginSurface( shader, 0 );
 	}
 
+#ifdef USE_VBO
 	VBO_UnBind();
+#endif
 
 	if ( !backEnd.projection2D ) {
 		RB_SetGL2D();
 	}
 
+#ifdef USE_FBO
 	//Check if it's time for BLOOM!
 	R_BloomScreen();
+#endif
 
 	RB_CHECKOVERFLOW( cmd->numverts, ( cmd->numverts - 2 ) * 3 );
 
@@ -1308,14 +1325,18 @@ static const void *RB_RotatedPic( const void *data ) {
 		RB_BeginSurface( shader, 0 );
 	}
 
+#ifdef USE_VBO
 	VBO_UnBind();
+#endif
 
 	if ( !backEnd.projection2D ) {
 		RB_SetGL2D();
 	}
 
+#ifdef USE_FBO
 	//Check if it's time for BLOOM!
 	R_BloomScreen();
+#endif
 
 	RB_CHECKOVERFLOW( 4, 6 );
 	numVerts = tess.numVertexes;
@@ -1393,14 +1414,18 @@ static const void *RB_StretchPicGradient( const void *data ) {
 		RB_BeginSurface( shader, 0 );
 	}
 
+#ifdef USE_VBO
 	VBO_UnBind();
+#endif
 
 	if ( !backEnd.projection2D ) {
 		RB_SetGL2D();
 	}
 
+#ifdef USE_FBO
 	//Check if it's time for BLOOM!
 	R_BloomScreen();
+#endif
 
 	RB_CHECKOVERFLOW( 4, 6 );
 	numVerts = tess.numVertexes;
@@ -1586,14 +1611,18 @@ static const void *RB_DrawSurfs( const void *data ) {
 	backEnd.refdef = cmd->refdef;
 	backEnd.viewParms = cmd->viewParms;
 
+#ifdef USE_VBO
 	VBO_UnBind();
+#endif
 
 	// clear the z buffer, set the modelview, etc
 	RB_BeginDrawingView();
 
 	RB_RenderDrawSurfList( cmd->drawSurfs, cmd->numDrawSurfs );
 
+#ifdef USE_VBO
 	VBO_UnBind();
+#endif
 
 	RB_DrawSun();
 
@@ -1610,11 +1639,13 @@ static const void *RB_DrawSurfs( const void *data ) {
 	}
 #endif
 
+#ifdef USE_FBO
 	if ( !backEnd.doneSurfaces && tr.needScreenMap ) {
 		if ( backEnd.viewParms.frameSceneNum == 1 ) {
 			FBO_CopyScreen();
 		}
 	}
+#endif
 
 	// draw main system development information (surface outlines, etc)
 	R_FogOff();
@@ -1640,12 +1671,16 @@ static const void *RB_DrawBuffer( const void *data ) {
 
 	cmd = (const drawBufferCommand_t *)data;
 
+#ifdef USE_FBO
 	if ( fboEnabled ) {
 		FBO_BindMain();
 		qglDrawBuffer( GL_COLOR_ATTACHMENT0 );
 	} else {
 		qglDrawBuffer( cmd->buffer );
 	}
+#else
+	qglDrawBuffer( cmd->buffer );
+#endif
 
 	// clear screen for debugging
 	if ( r_clear->integer ) {
@@ -1793,6 +1828,7 @@ static const void *RB_ClearColor( const void *data )
 RB_FinishBloom
 =============
 */
+#ifdef USE_FBO
 static const void *RB_FinishBloom( const void *data )
 {
 	const finishBloomCommand_t *cmd = data;
@@ -1830,6 +1866,7 @@ static const void *RB_FinishBloom( const void *data )
 
 	return (const void *)(cmd + 1);
 }
+#endif // USE_FBO
 
 
 static const void *RB_SwapBuffers( const void *data ) {
@@ -1838,7 +1875,10 @@ static const void *RB_SwapBuffers( const void *data ) {
 
 	// finish any 2D drawing if needed
 	RB_EndSurface();
+
+#ifdef USE_VBO
 	VBO_UnBind();
+#endif
 
 	// texture swapping test
 	if ( r_showImages->integer && !backEnd.drawConsole ) {
@@ -1851,21 +1891,23 @@ static const void *RB_SwapBuffers( const void *data ) {
 		qglFinish();
 	}
 
+#ifdef USE_FBO
 	if ( fboEnabled ) {
 		FBO_PostProcess();
 	}
+#endif
 
 	// buffer swap may take undefined time to complete, we can't measure it in a reliable way
 	backEnd.pc.msec = ri.Milliseconds() - backEnd.pc.msec;
 
 	if ( backEnd.screenshotMask && tr.frameCount > 1 ) {
-
+#ifdef USE_FBO
 		if ( superSampled ) {
 			qglScissor( 0, 0, gls.captureWidth, gls.captureHeight );
 			qglViewport( 0, 0, gls.captureWidth, gls.captureHeight );
 			FBO_BlitSS();
 		}
-
+#endif
 		if ( backEnd.screenshotMask & SCREENSHOT_TGA && backEnd.screenshotTGA[0] ) {
 			RB_TakeScreenshot( 0, 0, gls.captureWidth, gls.captureHeight, backEnd.screenshotTGA );
 			if ( !backEnd.screenShotTGAsilent ) {
@@ -1896,7 +1938,9 @@ static const void *RB_SwapBuffers( const void *data ) {
 
 	ri.GLimp_EndFrame();
 
+#ifdef USE_FBO
 	FBO_BindMain();
+#endif
 
 	backEnd.projection2D = qfalse;
 	backEnd.doneBloom = qfalse;
@@ -2044,9 +2088,11 @@ void RB_ExecuteRenderCommands( const void *data ) {
 		case RC_SWAP_BUFFERS:
 			data = RB_SwapBuffers( data );
 			break;
+#ifdef USE_FBO
 		case RC_FINISHBLOOM:
 			data = RB_FinishBloom(data);
 			break;
+#endif
 		case RC_COLORMASK:
 			data = RB_ColorMask(data);
 			break;

@@ -66,7 +66,6 @@ extern glconfig_t	glConfig;		// outside of TR since it shouldn't be cleared duri
 // compatibility issues to the original ID vms.  If you release a stand-alone
 // game and your mod uses tr_types.h from this build you can safely move them
 // to the glconfig_t struct.
-extern qboolean  nonPowerOfTwoTextures;
 extern int       maxAnisotropy;
 
 //
@@ -101,7 +100,6 @@ image_t *R_FindImageFile( const char *name, imgFlags_t flags );
 image_t *R_CreateImage( const char *name, const char *name2, byte *pic, int width, int height, imgFlags_t flags );
 void R_UploadSubImage( byte *data, int x, int y, int width, int height, image_t *image );
 
-void R_IssuePendingRenderCommands( void );
 qhandle_t RE_RegisterShaderLightMap( const char *name, int lightmapIndex );
 qhandle_t RE_RegisterShader( const char *name );
 qhandle_t RE_RegisterShaderNoMip( const char *name );

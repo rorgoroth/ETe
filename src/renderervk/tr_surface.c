@@ -405,11 +405,7 @@ static void RB_SurfaceTriangles( srfTriangles_t *srf ) {
 
 		*color = dv->color.u32;
 	}
-#ifdef USE_LEGACY_DLIGHTS
-	for ( i = 0 ; i < srf->numVerts ; i++ ) {
-		tess.vertexDlightBits[ tess.numVertexes + i] = dlightBits;
-	}
-#endif
+
 	tess.numVertexes += srf->numVerts;
 }
 
@@ -1417,9 +1413,6 @@ static void RB_SurfaceFace( const srfSurfaceFace_t *surf ) {
 			tess.texCoords[1][ndx][1] = v[6];
 		}
 		* ( unsigned int * ) &tess.vertexColors[ndx] = * ( unsigned int * ) &v[7];
-#ifdef USE_LEGACY_DLIGHTS
-		tess.vertexDlightBits[ndx] = dlightBits;
-#endif
 	}
 
 	tess.numVertexes += surf->numPoints;

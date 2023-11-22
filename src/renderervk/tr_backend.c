@@ -589,7 +589,9 @@ static void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	int				i;
 	drawSurf_t		*drawSurf;
 	unsigned int	oldSort;
+#ifdef USE_PMLIGHT
 	float			oldShaderSort;
+#endif
 	double			originalTime; // -EC-
 
 	// save original time for entity shader offsets
@@ -604,7 +606,9 @@ static void RB_RenderDrawSurfList( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 	wasCrosshair = qfalse;
 #endif
 	oldSort = MAX_UINT;
+#ifdef USE_PMLIGHT
 	oldShaderSort = -1;
+#endif
 	depthRange = qfalse;
 
 	backEnd.pc.c_surfaces += numDrawSurfs;
@@ -2032,12 +2036,19 @@ static const void *RB_RenderToTexture( const void *data ) {
 
 	cmd = (const renderToTextureCommand_t *)data;
 
+	GL_Bind( cmd->image );
+
+#ifdef USE_VULKAN
+	vk_create_image( cmd->image, cmd->w, cmd->h, 1 );
+#else
+
 /*	GL_Bind( cmd->image );
 	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_LINEAR );
 	qglTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_LINEAR );
 	qglTexParameteri( GL_TEXTURE_2D, GL_GENERATE_MIPMAP_SGIS, GL_TRUE );
 	qglCopyTexImage2D( GL_TEXTURE_2D, 0, GL_RGB, cmd->x, cmd->y, cmd->w, cmd->h, 0 );
 //	qglCopyTexSubImage2D( GL_TEXTURE_2D, 0, 0, 0, cmd->x, cmd->y, cmd->w, cmd->h );*/
+#endif
 
 	return (const void *)( cmd + 1 );
 }

@@ -1239,7 +1239,9 @@ void RB_SurfaceAnim( mdsSurface_t *surface ) {
 	ldt = dt;
 #endif
 
+#ifdef USE_VBO
 	VBO_Flush();
+#endif
 
 	refent = &backEnd.currentEntity->e;
 	boneList = ( int * )( (byte *)surface + surface->ofsBoneReferences );

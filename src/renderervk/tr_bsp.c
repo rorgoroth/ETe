@@ -140,6 +140,7 @@ void R_ColorShiftLightingBytes( const byte in[4], byte out[4], qboolean hasAlpha
 		out[1] = g;
 		out[2] = b;
 	}
+
 	if ( hasAlpha ) {
 		out[3] = in[3];
 	}
@@ -397,7 +398,7 @@ ShaderForShaderNum
 */
 static shader_t *ShaderForShaderNum( int shaderNum, int lightmapNum ) {
 	shader_t	*shader;
-	dshader_t	*dsh;
+	const dshader_t *dsh;
 
 	int _shaderNum = LittleLong( shaderNum );
 	if ( _shaderNum < 0 || _shaderNum >= s_worldData.numShaders ) {
@@ -2130,6 +2131,20 @@ static void R_LoadPlanes( const lump_t *l ) {
 
 /*
 =================
+R_PreLoadFogs
+=================
+*/
+static void R_PreLoadFogs( const lump_t *l ) {
+	if ( l->filelen % sizeof( dfog_t ) ) {
+		tr.numFogs = 0;
+	} else {
+		tr.numFogs = l->filelen / sizeof( dfog_t );
+	}
+}
+
+
+/*
+=================
 R_LoadFogs
 =================
 */
@@ -2324,8 +2339,7 @@ R_LoadEntities
 ================
 */
 static void R_LoadEntities( const lump_t *l ) {
-	const char *p, *token;
-	char *s;
+	const char *p, *token, *s;
 	char keyname[MAX_TOKEN_CHARS];
 	char value[MAX_TOKEN_CHARS], *v[3];
 	world_t	*w;
@@ -2368,12 +2382,12 @@ static void R_LoadEntities( const lump_t *l ) {
 		// check for remapping of shaders
 		s = "remapshader";
 		if (!Q_strncmp(keyname, s, (int)strlen(s)) ) {
-			s = strchr(value, ';');
-			if (!s) {
+			char *vs = strchr(value, ';');
+			if (!vs) {
 				ri.Printf( PRINT_WARNING, "WARNING: no semi colon in shaderremap '%s'\n", value );
 				break;
 			}
-			*s++ = '\0';
+			*vs++ = '\0';
 			RE_RemapShader(value, s, "0");
 			continue;
 		}
@@ -2438,7 +2452,7 @@ void RE_LoadWorldMap( const char *name ) {
 	tr.sunDirection[1] = 0.3f;
 	tr.sunDirection[2] = 0.9f;
 
-	tr.sunShader = 0;   // clear sunshader so it's not there if the level doesn't specify it
+	tr.sunShader = NULL;   // clear sunshader so it's not there if the level doesn't specify it
 
 	// inalidate fogs (likely to be re-initialized to new values by the current map)
 	// TODO:(SA)this is sort of silly.  I'm going to do a general cleanup on fog stuff
@@ -2507,6 +2521,8 @@ void RE_LoadWorldMap( const char *name ) {
 	}
 
 	// load into heap
+	ri.SCR_UpdateScreen();
+	R_PreLoadFogs( &header->lumps[LUMP_FOGS] );
 	ri.SCR_UpdateScreen();
 	R_LoadShaders( &header->lumps[LUMP_SHADERS] );
 	ri.SCR_UpdateScreen();

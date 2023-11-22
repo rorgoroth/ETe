@@ -2002,7 +2002,7 @@ static void R_SortDrawSurfs( drawSurf_t *drawSurfs, int numDrawSurfs ) {
 R_AddEntitySurfaces
 =============
 */
-void R_AddEntitySurfaces( void ) {
+static void R_AddEntitySurfaces( void ) {
 	trRefEntity_t	*ent;
 	shader_t		*shader;
 
@@ -2022,7 +2022,7 @@ void R_AddEntitySurfaces( void ) {
 
 		//
 		// the weapon model must be handled special --
-		// we don't want the hacked weapon position showing in 
+		// we don't want the hacked first person weapon position showing in 
 		// mirrors, because the true body position will already be drawn
 		//
 		if ( (ent->e.renderfx & RF_FIRST_PERSON) && (tr.viewParms.portalView != PV_NONE) ) {
@@ -2105,7 +2105,7 @@ void R_AddEntitySurfaces( void ) {
 R_GenerateDrawSurfs
 ====================
 */
-void R_GenerateDrawSurfs( void ) {
+static void R_GenerateDrawSurfs( void ) {
 	// set the projection matrix (and view frustum) here
 	// first with max or fog distance so we can have proper
 	// arbitrary frustum farplane culling optimization

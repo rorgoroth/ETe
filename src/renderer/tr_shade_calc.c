@@ -1295,13 +1295,13 @@ void RB_CalcEnvironmentTexCoordsFP( float *st, qboolean screenMap ) {
 
 void RB_CalcEnvironmentTexCoords( float *st ) {
 	int i;
-	float d2, *v, *normal, sAdjust, tAdjust;
-	vec3_t viewOrigin, ia1, ia2, viewer, reflected;
+	const float *v, *normal;
+	float d2, sAdjust, tAdjust;
+	vec3_t ia1, ia2, viewer, reflected;
 
 	// setup
 	v = tess.xyz[ 0 ];
 	normal = tess.normal[ 0 ];
-	VectorCopy( backEnd.orientation.viewOrigin, viewOrigin );
 
 	// ydnar: origin of entity affects its environment map (every 256 units)
 	// this is similar to racing game hacks where the env map seems to move
@@ -1328,7 +1328,7 @@ void RB_CalcEnvironmentTexCoords( float *st ) {
 	// walk verts
 	for ( i = 0; i < tess.numVertexes; i++, v += 4, normal += 4, st += 2 )
 	{
-		VectorSubtract( viewOrigin, v, viewer );
+		VectorSubtract( backEnd.orientation.viewOrigin, v, viewer );
 		VectorNormalizeFast( viewer );
 
 		d2 = 2.0 * DotProduct( normal, viewer );
@@ -1633,7 +1633,6 @@ void RB_CalcDiffuseColor( unsigned char *colors ) {
 	const trRefEntity_t   *ent;
 	vec3_t lightDir;
 	int numVertexes;
-
 
 	ent = backEnd.currentEntity;
 	VectorCopy( ent->lightDir, lightDir );

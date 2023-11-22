@@ -469,7 +469,10 @@ loads a model's shadow script
 */
 
 void R_LoadModelShadow( model_t *mod ) {
-	unsigned    *buf;
+	union {
+		char *c;
+		void *v;
+	} buf;
 	char filename[ 1024 ];
 	shader_t    *sh;
 
@@ -481,20 +484,20 @@ void R_LoadModelShadow( model_t *mod ) {
 	COM_DefaultExtension( filename, 1024, ".shadow" );
 
 	// load file
-	ri.FS_ReadFile( filename, (void**) &buf );
-	if ( buf != NULL ) {
+	ri.FS_ReadFile( filename, &buf.v );
+	if ( buf.v != NULL ) {
 		char    *shadowBits;
 
-		shadowBits = strchr( (char*) buf, ' ' );
+		shadowBits = strchr( buf.c, ' ' );
 		if ( shadowBits != NULL ) {
 			*shadowBits = '\0';
 			shadowBits++;
 
-			if ( strlen( (char*) buf ) >= MAX_QPATH ) {
+			if ( strlen( buf.c ) >= MAX_QPATH ) {
 				Com_Printf( "R_LoadModelShadow: Shader name exceeds MAX_QPATH\n" );
 				mod->shadowShader = 0;
 			} else {
-				sh = R_FindShader( (char*) buf, LIGHTMAP_NONE, qtrue );
+				sh = R_FindShader( buf.c, LIGHTMAP_NONE, qtrue );
 
 				if ( sh->defaultShader ) {
 					mod->shadowShader = 0;
@@ -506,7 +509,7 @@ void R_LoadModelShadow( model_t *mod ) {
 					&mod->shadowParms[ 0 ], &mod->shadowParms[ 1 ], &mod->shadowParms[ 2 ],
 					&mod->shadowParms[ 3 ], &mod->shadowParms[ 4 ], &mod->shadowParms[ 5 ] );
 		}
-		ri.FS_FreeFile( buf );
+		ri.FS_FreeFile( buf.v );
 	}
 }
 
@@ -655,7 +658,7 @@ qhandle_t RE_RegisterModel( const char *name ) {
 
 //-------------------------------------------------------------------------------
 // Ridah, mesh compression
-#include "anorms256.h"
+#include "../renderercommon/anorms256.h"
 
 // rain - unused
 #if 0
@@ -1651,8 +1654,14 @@ static qboolean R_LoadMDS( model_t *mod, void *buffer, int fileSize, const char 
 		return qfalse;
 	}
 
-	mod->type = MOD_MDS;
 	size = LittleLong( pinmodel->ofsEnd );
+
+	if ( size > fileSize ) {
+		ri.Printf( PRINT_WARNING, "%s: %s has corrupted header\n", __func__, mod_name );
+		return qfalse;
+	}
+
+	mod->type = MOD_MDS;
 	mod->dataSize += size;
 	mds = mod->model.mds = ri.Hunk_Alloc( size, h_low );
 

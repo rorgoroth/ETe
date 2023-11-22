@@ -50,13 +50,16 @@ typedef struct frameBuffer_s {
 	qboolean multiSampled;
 } frameBuffer_t;
 
+#ifdef USE_FBO
 static GLuint commonDepthStencil;
+
 static frameBuffer_t frameBufferMS;
 static frameBuffer_t frameBuffers[ FBO_COUNT ];
 
 static qboolean frameBufferMultiSampling = qfalse;
 
 qboolean blitMSfbo = qfalse;
+#endif
 
 #ifndef GL_TEXTURE_IMAGE_FORMAT
 #define GL_TEXTURE_IMAGE_FORMAT 0x828F
@@ -670,6 +673,7 @@ static const char *spriteFP = {
 };
 
 
+#ifdef USE_FBO
 static char *ARB_BuildGreyscaleProgram( char *buf ) {
 	char *s;
 
@@ -991,6 +995,7 @@ static void ARB_BlurParams( int width, int height, int ksize, qboolean horizonta
 			qglProgramLocalParameter4fARB( GL_FRAGMENT_PROGRAM_ARB, i, 0.0, offset[i][1], 0.0, weight[i] );
 	}
 }
+#endif // USE_FBO
 
 
 static void ARB_DeletePrograms( void )
@@ -1038,7 +1043,9 @@ qboolean ARB_UpdatePrograms( void )
 	const char *program;
 	int i;
 #endif
+#if defined (USE_FBO) || defined (USE_PMLIGHT)
 	char buf[4096];
+#endif
 
 	if ( !qglGenProgramsARB )
 		return qfalse;
@@ -1073,6 +1080,7 @@ qboolean ARB_UpdatePrograms( void )
 	if ( !ARB_CompileProgram( Fragment, spriteFP, programs[ SPRITE_FRAGMENT ] ) )
 		return qfalse;
 
+#ifdef USE_FBO
 	if ( !ARB_CompileProgram( Fragment, va( gammaFP, ARB_BuildGreyscaleProgram( buf ) ), programs[ GAMMA_FRAGMENT ] ) )
 		return qfalse;
 
@@ -1096,11 +1104,14 @@ qboolean ARB_UpdatePrograms( void )
 
 	if ( !ARB_CompileProgram( Fragment, va( blend2gammaFP, ARB_BuildGreyscaleProgram( buf ) ), programs[ BLEND2_GAMMA_FRAGMENT ] ) )
 		return qfalse;
+#endif // USE_FBO
 
 	programCompiled = 1;
 
 	return qtrue;
 }
+
+#ifdef USE_FBO
 
 static void FBO_Bind( GLuint target, GLuint buffer );
 
@@ -2066,7 +2077,6 @@ void FBO_PostProcess( void )
 }
 
 
-
 void QGL_SetRenderScale( qboolean verbose )
 {
 	windowAdjusted = qfalse;
@@ -2229,21 +2239,25 @@ void QGL_InitFBO( void )
 		QGL_DoneFBO();
 	}
 }
+#endif // USE_FBO
 
 
 void QGL_InitARB( void )
 {
 	ARB_UpdatePrograms();
+#ifdef USE_FBO
 	QGL_SetRenderScale( qtrue );
 	QGL_InitFBO();
+#endif
 	ri.Cvar_ResetGroup( CVG_RENDERER, qtrue );
 }
 
 
 void QGL_DoneARB( void )
 {
+#ifdef USE_FBO
 	QGL_DoneFBO();
-
+#endif
 	if ( programCompiled )
 	{
 		ARB_ProgramDisable();

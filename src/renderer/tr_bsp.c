@@ -2307,7 +2307,7 @@ void RE_LoadWorldMap( const char *name ) {
 	tr.sunDirection[1] = 0.3f;
 	tr.sunDirection[2] = 0.9f;
 
-	tr.sunShader = 0;   // clear sunshader so it's not there if the level doesn't specify it
+	tr.sunShader = NULL;   // clear sunshader so it's not there if the level doesn't specify it
 
 	// invalidate fogs (likely to be re-initialized to new values by the current map)
 	// TODO:(SA)this is sort of silly.  I'm going to do a general cleanup on fog stuff
@@ -2405,7 +2405,9 @@ void RE_LoadWorldMap( const char *name ) {
 	R_LoadLightGrid( &header->lumps[LUMP_LIGHTGRID] );
 	ri.SCR_UpdateScreen();
 
+#ifdef USE_VBO
 	R_BuildWorldVBO( s_worldData.surfaces, s_worldData.numsurfaces );
+#endif
 
 	tr.mapLoading = qfalse;
 

@@ -593,7 +593,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 	int depthMaskBits = GLS_DEPTHMASK_TRUE, blendSrcBits = 0, blendDstBits = 0, atestBits = 0, depthFuncBits = 0;
 	qboolean depthMaskExplicit = qfalse;
 
-	stage->active = qtrue;
+	stage->active = qfalse;
 
 	while ( 1 )
 	{
@@ -956,19 +956,20 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 				blendSrcBits = NameToSrcBlendMode( token );
 
 				token = COM_ParseExt( text, qfalse );
-				if ( token[0] == 0 )
+				if ( token[0] == '\0' )
 				{
 					ri.Printf( PRINT_WARNING, "WARNING: missing parm for blendFunc in shader '%s'\n", shader.name );
+					blendDstBits = GLS_DSTBLEND_ONE; // by default
 					continue;
 				}
 				blendDstBits = NameToDstBlendMode( token );
 			}
 
 			// clear depth mask for blended surfaces
-			if ( !depthMaskExplicit )
-			{
+			if ( !depthMaskExplicit ) {
 				depthMaskBits = 0;
 			}
+
 		}
 		//
 		// rgbGen
@@ -1019,7 +1020,7 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 			else if ( !Q_stricmp( token, "vertex" ) )
 			{
 				stage->bundle[0].rgbGen = CGEN_VERTEX;
-				if ( stage->bundle[0].alphaGen == 0 ) {
+				if ( stage->bundle[0].alphaGen == AGEN_IDENTITY ) {
 					stage->bundle[0].alphaGen = AGEN_VERTEX;
 				}
 			}
@@ -1254,21 +1255,17 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 		stage->bundle[ 0 ].rgbGen = CGEN_EXACT_VERTEX;
 	}
 
-
 	//
 	// implicitly assume that a GL_ONE GL_ZERO blend mask disables blending
 	//
-	if ( ( blendSrcBits == GLS_SRCBLEND_ONE ) &&
-		 ( blendDstBits == GLS_DSTBLEND_ZERO ) )
-	{
+	if ( ( blendSrcBits == GLS_SRCBLEND_ONE ) && ( blendDstBits == GLS_DSTBLEND_ZERO ) ) {
 		blendDstBits = blendSrcBits = 0;
 		depthMaskBits = GLS_DEPTHMASK_TRUE;
 	}
 
 	// decide which agens we can skip
 	if ( stage->bundle[0].alphaGen == AGEN_IDENTITY ) {
-		if ( stage->bundle[0].rgbGen == CGEN_IDENTITY
-			|| stage->bundle[0].rgbGen == CGEN_LIGHTING_DIFFUSE ) {
+		if ( stage->bundle[0].rgbGen == CGEN_IDENTITY || stage->bundle[0].rgbGen == CGEN_LIGHTING_DIFFUSE ) {
 			stage->bundle[0].alphaGen = AGEN_SKIP;
 		}
 	}
@@ -1297,6 +1294,8 @@ static qboolean ParseStage( shaderStage_t *stage, const char **text )
 		atestBits |
 		depthFuncBits;
 
+	stage->active = qtrue;
+
 	return qtrue;
 }
 
@@ -1316,7 +1315,7 @@ deformVertexes text[0-7]
 ===============
 */
 static void ParseDeform( const char **text ) {
-	const char *token;
+	const char	*token;
 	deformStage_t	*ds;
 
 	token = COM_ParseExt( text, qfalse );
@@ -1466,7 +1465,7 @@ skyParms <outerbox> <cloudheight> <innerbox>
 ===============
 */
 static void ParseSkyParms( const char **text ) {
-	const char	*token;
+	const char		*token;
 	static const char	*suf[6] = {"rt", "bk", "lf", "ft", "up", "dn"};
 	char		pathname[MAX_QPATH];
 	int			i;
@@ -1867,9 +1866,9 @@ static qboolean ParseShader( const char **text )
 	resultType res;
 	branchType branch;
 	const char *token;
-	int s;
+	int numStages;
 
-	s = 0;
+	numStages = 0;
 	tr.allowCompress = compress_allowed;   // allow compression by default
 
 	s_extendedShader = (*text >= s_extensionOffset);
@@ -1901,18 +1900,17 @@ static qboolean ParseShader( const char **text )
 		// stage definition
 		else if ( token[0] == '{' )
 		{
-			if ( s >= MAX_SHADER_STAGES ) {
+			if ( numStages >= MAX_SHADER_STAGES ) {
 				ri.Printf( PRINT_WARNING, "WARNING: too many stages in shader %s (max is %i)\n", shader.name, MAX_SHADER_STAGES );
 				return qfalse;
 			}
 
-			if ( !ParseStage( &stages[s], text ) )
+			if ( !ParseStage( &stages[numStages], text ) )
 			{
 				return qfalse;
 			}
-			stages[s].active = qtrue;
-			s++;
 
+			numStages++;
 			continue;
 		}
 		// skip stuff that only the QuakeEdRadient needs
@@ -2005,7 +2003,7 @@ static qboolean ParseShader( const char **text )
 			continue;
 		}
 		// fogParms
-		else if ( !Q_stricmp( token, "fogParms" ) ) 
+		else if ( !Q_stricmp( token, "fogParms" ) )
 		{
 			vec3_t fogColor;
 
@@ -2285,7 +2283,7 @@ static qboolean ParseShader( const char **text )
 				// skip next stage or keyword until newline
 				token = COM_ParseExt( text, qtrue );
 				if ( token[0] == '{' )
-					SkipBracedSection( text, 1 );
+					SkipBracedSection( text, 1 /* depth */ );
 				else
 					SkipRestOfLine( text );
 			} else {
@@ -2338,7 +2336,7 @@ static qboolean ParseShader( const char **text )
 	// ignore shaders that don't have any stages, unless it is a sky or fog
 	// ydnar: or have implicit mapping
 	//
-	if ( s == 0 && !shader.isSky && !( shader.contentFlags & CONTENTS_FOG ) && implicitMap[ 0 ] == '\0' ) {
+	if ( numStages == 0 && !shader.isSky && !( shader.contentFlags & CONTENTS_FOG ) && implicitMap[ 0 ] == '\0' ) {
 		return qfalse;
 	}
 
@@ -2390,7 +2388,7 @@ typedef struct {
 	int		multitextureBlend;
 } collapse_t;
 
-static collapse_t	collapse[] = {
+static const collapse_t collapse[] = {
 	{ 0, GLS_DSTBLEND_SRC_COLOR | GLS_SRCBLEND_ZERO,
 		GL_MODULATE, 0 },
 
@@ -2647,7 +2645,7 @@ static int tcmodWeight( const textureBundle_t *bundle )
 	return 0;
 }
 
-
+#if 0
 static int rgbWeight( const textureBundle_t *bundle ) {
 
 	switch ( bundle->rgbGen ) {
@@ -2659,6 +2657,7 @@ static int rgbWeight( const textureBundle_t *bundle ) {
 		default: return 0;
 	}
 }
+#endif
 
 static const textureBundle_t *lightingBundle( int stageIndex, const textureBundle_t *selected ) {
 	const shaderStage_t *stage = &stages[ stageIndex ];
@@ -2683,9 +2682,10 @@ static const textureBundle_t *lightingBundle( int stageIndex, const textureBundl
 			if ( tcmodWeight( selected ) > tcmodWeight( bundle ) ) {
 				continue;
 			}
-			if ( rgbWeight( selected ) > rgbWeight( bundle ) ) {
-				continue;
-			}
+			// commented because causes regression in q3dm1' Mouth area
+			//if ( rgbWeight( selected ) > rgbWeight( bundle ) ) {
+			//	continue;
+			//}
 		}
 		shader.lightingStage = stageIndex;
 		shader.lightingBundle = i;
@@ -2907,7 +2907,6 @@ static qboolean EqualRGBgen( const shaderStage_t *st1, const shaderStage_t *st2 
 static qboolean EqualTCgen( int bundle, const shaderStage_t *st1, const shaderStage_t *st2 )
 {
 	const textureBundle_t *b1, *b2;
-	const texModInfo_t *tm1, *tm2;
 	int tm;
 
 	if ( st1 == NULL || st2 == NULL )
@@ -2935,17 +2934,18 @@ static qboolean EqualTCgen( int bundle, const shaderStage_t *st1, const shaderSt
 	//	}
 	//}
 
-	if ( b1->tcGen != TCGEN_LIGHTMAP && b1->isLightmap != b2->isLightmap && r_mergeLightmaps->integer ) {
-		return qfalse;
-	}
+	//if ( b1->tcGen != TCGEN_LIGHTMAP && b1->isLightmap != b2->isLightmap && r_mergeLightmaps->integer ) {
+	//	return qfalse;
+	//}
 
 	if ( b1->numTexMods != b2->numTexMods ) {
 		return qfalse;
 	}
 
 	for ( tm = 0; tm < b1->numTexMods; tm++ ) {
-		tm1 = &b1->texMods[ tm ];
-		tm2 = &b2->texMods[ tm ];
+		const texModInfo_t *tm1 = &b1->texMods[ tm ];
+		const texModInfo_t *tm2 = &b2->texMods[ tm ];
+
 		if ( tm1->type != tm2->type ) {
 			return qfalse;
 		}
@@ -3217,15 +3217,29 @@ static void InitShader( const char *name, int lightmapIndex ) {
 
 static void DetectNeeds( void )
 {
-	texCoordGen_t t1;
-	texCoordGen_t t2;
-	int i;
+	int i, n;
 
 	for ( i = 0; i < MAX_SHADER_STAGES; i++ )
 	{
 		if ( !stages[i].active )
 			break;
 
+		for ( n = 0; n < NUM_TEXTURE_BUNDLES; n++ ) {
+			const texCoordGen_t t = stages[i].bundle[n].tcGen;
+			if ( t == TCGEN_LIGHTMAP )
+			{
+				shader.needsST2 = qtrue;
+			} 
+			if ( t == TCGEN_ENVIRONMENT_MAPPED || t == TCGEN_ENVIRONMENT_MAPPED_FP )
+			{
+				shader.needsNormal = qtrue;
+			}
+			if ( stages[i].bundle[n].alphaGen == AGEN_LIGHTING_SPECULAR || stages[i].bundle[n].rgbGen == CGEN_LIGHTING_DIFFUSE )
+			{
+				shader.needsNormal = qtrue;
+			}
+		}
+#if 0
 		t1 = stages[i].bundle[0].tcGen;
 		t2 = stages[i].bundle[1].tcGen;
 
@@ -3245,6 +3259,7 @@ static void DetectNeeds( void )
 		{
 			shader.needsNormal = qtrue;
 		}
+#endif
 	}
 	for ( i = 0; i < shader.numDeforms; i++ )
 	{
@@ -3277,7 +3292,7 @@ static shader_t *FinishShader( void ) {
 	hasLightmapStage = qfalse;
 	colorBlend = qfalse;
 	depthMask = qfalse;
-	fogCollapse = qtrue;
+	fogCollapse = qfalse;
 
 	//
 	// set sky stuff appropriate
@@ -3304,7 +3319,7 @@ static shader_t *FinishShader( void ) {
 		}
 
 		// check for a missing texture
-		if ( !pStage->bundle[0].image[0] ) {
+		if ( pStage->bundle[0].image[0] == NULL ) {
 			ri.Printf( PRINT_WARNING, "Shader %s has a stage with no image\n", shader.name );
 			pStage->active = qfalse;
 			stage++;
@@ -3479,12 +3494,64 @@ static shader_t *FinishShader( void ) {
 
 #ifdef USE_VULKAN
 
+#ifdef USE_FOG_COLLAPSE
+	if ( vk.maxBoundDescriptorSets >= 6 && !(shader.contentFlags & CONTENTS_FOG) && shader.fogPass != FP_NONE ) {
+		fogCollapse = qtrue;
+		if ( stage == 1 ) {
+			// we can always fog-collapse signle-stage shaders
+		} else {
+			if ( tr.numFogs ) {
+				// check for (un)acceptable blend modes
+				for ( i = 0; i < stage; i++ ) {
+					const uint32_t blendBits = stages[i].stateBits & GLS_BLEND_BITS;
+					switch ( blendBits & GLS_SRCBLEND_BITS ) {
+					case GLS_SRCBLEND_DST_COLOR:
+					case GLS_SRCBLEND_ONE_MINUS_DST_COLOR:
+					case GLS_SRCBLEND_DST_ALPHA:
+					case GLS_SRCBLEND_ONE_MINUS_DST_ALPHA:
+						fogCollapse = qfalse;
+						break;
+					}
+					switch ( blendBits & GLS_DSTBLEND_BITS ) {
+						case GLS_DSTBLEND_DST_ALPHA:
+						case GLS_DSTBLEND_ONE_MINUS_DST_ALPHA:
+						fogCollapse = qfalse;
+						break;
+					}
+				}
+				if ( fogCollapse ) {
+					for ( i = 1; i < stage; i++ ) {
+						const uint32_t blendBits = stages[i].stateBits & GLS_BLEND_BITS;
+						if ( blendBits == (GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA) || blendBits == (GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA) ) {
+							if ( stages[i].bundle[0].adjustColorsForFog == ACFF_NONE ) {
+								fogCollapse = qfalse;
+								break;
+							}
+						}
+					}
+				}
+				if ( fogCollapse ) {
+					// correct add mode
+					for ( i = 1; i < stage; i++ ) {
+						const uint32_t blendBits = stages[i].stateBits & GLS_BLEND_BITS;
+						if ( blendBits == (GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE) ) {
+							stages[i].bundle[0].adjustColorsForFog = ACFF_MODULATE_RGBA;
+						}
+					}
+				}
+			}
+		}
+	}
+	if ( tr.numFogs == 0 ) {
+		// if there is no fogs - assume that we can apply all color optimizations without any restrictions
+		fogCollapse = qtrue;
+	}
+#endif
+
 	shader.tessFlags = TESS_XYZ;
-	stages[0].tessFlags = TESS_RGBA0 | TESS_ST0;
 
 	{
 		Vk_Pipeline_Def def;
-		Vk_Shader_Type stype;
 
 		Com_Memset( &def, 0, sizeof( def ) );
 		def.face_culling = shader.cullType;
@@ -3507,7 +3574,7 @@ static shader_t *FinishShader( void ) {
 						break;
 					case GL_ADD:
 						pStage->tessFlags = TESS_RGBA0 | TESS_ST0 | TESS_ST1 | TESS_ST2;
-						def.shader_type = TYPE_MULTI_TEXTURE_ADD3_IDENTITY;
+						def.shader_type = TYPE_MULTI_TEXTURE_ADD3_1_1;
 						break;
 					case GL_ADD_NONIDENTITY:
 						pStage->tessFlags = TESS_RGBA0 | TESS_ST0 | TESS_ST1 | TESS_ST2;
@@ -3547,21 +3614,69 @@ static shader_t *FinishShader( void ) {
 						break;
 				}
 			}
-			else
-			switch ( pStage->mtEnv ) {
+			else {
+				switch ( pStage->mtEnv ) {
 				case GL_MODULATE:
 					pStage->tessFlags = TESS_RGBA0 | TESS_ST0 | TESS_ST1;
 					def.shader_type = TYPE_MULTI_TEXTURE_MUL2;
+					if ( ( pStage->bundle[0].adjustColorsForFog == ACFF_NONE && pStage->bundle[1].adjustColorsForFog == ACFF_NONE ) || fogCollapse ) {
+						if ( pStage->bundle[0].rgbGen == CGEN_IDENTITY && pStage->bundle[1].rgbGen == CGEN_IDENTITY ) {
+							if ( pStage->bundle[1].alphaGen == AGEN_SKIP && pStage->bundle[0].alphaGen == AGEN_SKIP ) {
+								pStage->tessFlags = TESS_ST0 | TESS_ST1;
+								def.shader_type = TYPE_MULTI_TEXTURE_MUL2_IDENTITY;
+							}
+						}
+						else if ( pStage->bundle[0].rgbGen == CGEN_IDENTITY_LIGHTING && pStage->bundle[1].rgbGen == CGEN_IDENTITY_LIGHTING && pStage->bundle[0].alphaGen == pStage->bundle[1].alphaGen ) {
+							if ( pStage->bundle[0].alphaGen == AGEN_SKIP || pStage->bundle[0].alphaGen == AGEN_IDENTITY ) {
+								pStage->tessFlags = TESS_ST0 | TESS_ST1;
+								def.shader_type = TYPE_MULTI_TEXTURE_MUL2_FIXED_COLOR;
+								def.color.rgb = tr.identityLightByte;
+								def.color.alpha = pStage->bundle[0].alphaGen == AGEN_IDENTITY ? 255 : tr.identityLightByte;
+							}
+						}
+					}
 					break;
 				case GL_ADD:
 					pStage->tessFlags = TESS_RGBA0 | TESS_ST0 | TESS_ST1;
-					def.shader_type = TYPE_MULTI_TEXTURE_ADD2_IDENTITY;
+					def.shader_type = TYPE_MULTI_TEXTURE_ADD2_1_1;
+					if ( ( pStage->bundle[0].adjustColorsForFog == ACFF_NONE && pStage->bundle[1].adjustColorsForFog == ACFF_NONE ) || fogCollapse ) {
+						if ( pStage->bundle[0].rgbGen == CGEN_IDENTITY && pStage->bundle[1].rgbGen == CGEN_IDENTITY ) {
+							if ( pStage->bundle[0].alphaGen == AGEN_SKIP && pStage->bundle[1].alphaGen == AGEN_SKIP ) {
+								pStage->tessFlags = TESS_ST0 | TESS_ST1;
+								def.shader_type = TYPE_MULTI_TEXTURE_ADD2_IDENTITY;
+							}
+						}
+						else if ( pStage->bundle[0].rgbGen == CGEN_IDENTITY_LIGHTING && pStage->bundle[1].rgbGen == CGEN_IDENTITY_LIGHTING && pStage->bundle[0].alphaGen == pStage->bundle[1].alphaGen ) {
+							if ( pStage->bundle[0].alphaGen == AGEN_SKIP || pStage->bundle[0].alphaGen == AGEN_IDENTITY ) {
+								pStage->tessFlags = TESS_ST0 | TESS_ST1;
+								def.shader_type = TYPE_MULTI_TEXTURE_ADD2_FIXED_COLOR;
+								def.color.rgb = tr.identityLightByte;
+								def.color.alpha = pStage->bundle[0].alphaGen == AGEN_IDENTITY ? 255 : tr.identityLightByte;
+							}
+						}
+					}
 					break;
 				case GL_ADD_NONIDENTITY:
 					pStage->tessFlags = TESS_RGBA0 | TESS_ST0 | TESS_ST1;
 					def.shader_type = TYPE_MULTI_TEXTURE_ADD2;
+					if ( ( pStage->bundle[0].adjustColorsForFog == ACFF_NONE && pStage->bundle[1].adjustColorsForFog == ACFF_NONE ) || fogCollapse ) {
+						if ( pStage->bundle[0].rgbGen == CGEN_IDENTITY && pStage->bundle[1].rgbGen == CGEN_IDENTITY ) {
+							if ( pStage->bundle[0].alphaGen == AGEN_SKIP && pStage->bundle[1].alphaGen == AGEN_SKIP ) {
+								pStage->tessFlags = TESS_ST0 | TESS_ST1;
+								def.shader_type = TYPE_MULTI_TEXTURE_ADD2_IDENTITY;
+							}
+						}
+						else if ( pStage->bundle[0].rgbGen == CGEN_IDENTITY_LIGHTING && pStage->bundle[1].rgbGen == CGEN_IDENTITY_LIGHTING && pStage->bundle[0].alphaGen == pStage->bundle[1].alphaGen ) {
+							if ( pStage->bundle[0].alphaGen == AGEN_SKIP || pStage->bundle[0].alphaGen == AGEN_IDENTITY ) {
+								pStage->tessFlags = TESS_ST0 | TESS_ST1;
+								def.shader_type = TYPE_MULTI_TEXTURE_ADD2_FIXED_COLOR;
+								def.color.rgb = tr.identityLightByte;
+								def.color.alpha = pStage->bundle[0].alphaGen == AGEN_IDENTITY ? 255 : tr.identityLightByte;
+							}
+						}
+					}
 					break;
-
+				// extended blending modes
 				case GL_BLEND_MODULATE:
 					pStage->tessFlags = TESS_RGBA0 | TESS_RGBA1 | TESS_ST0 | TESS_ST1;
 					def.shader_type = TYPE_BLEND2_MUL;
@@ -3594,8 +3709,31 @@ static shader_t *FinishShader( void ) {
 				default:
 					pStage->tessFlags = TESS_RGBA0 | TESS_ST0;
 					def.shader_type = TYPE_SIGNLE_TEXTURE;
+					if ( pStage->bundle[0].adjustColorsForFog == ACFF_NONE || fogCollapse ) {
+						if ( pStage->bundle[0].rgbGen == CGEN_IDENTITY ) {
+							if ( pStage->bundle[0].alphaGen == AGEN_SKIP ) {
+								pStage->tessFlags = TESS_ST0;
+								def.shader_type = TYPE_SIGNLE_TEXTURE_IDENTITY;
+							}
+						}
+						else if ( pStage->bundle[0].rgbGen == CGEN_IDENTITY_LIGHTING ) {
+							if ( pStage->bundle[0].alphaGen == AGEN_SKIP || pStage->bundle[0].alphaGen == AGEN_IDENTITY ) {
+								pStage->tessFlags = TESS_ST0;
+								def.shader_type = TYPE_SIGNLE_TEXTURE_FIXED_COLOR;
+								def.color.rgb = tr.identityLightByte;
+								def.color.alpha = pStage->bundle[0].alphaGen == AGEN_IDENTITY ? 255 : tr.identityLightByte;
+							}
+						}
+						else if ( pStage->bundle[0].rgbGen == CGEN_ENTITY ) {
+							if ( pStage->bundle[0].alphaGen == AGEN_ENTITY || pStage->bundle[0].alphaGen == AGEN_SKIP || pStage->bundle[0].alphaGen == AGEN_IDENTITY ) {
+								pStage->tessFlags = TESS_ST0 | TESS_ENT0;
+								def.shader_type = TYPE_SIGNLE_TEXTURE_ENT_COLOR;
+							}
+						}
+					}
 					break;
-			}
+				}
+			} // switch mtEnv3 / mtEnv
 
 			for ( env_mask = 0, n = 0; n < pStage->numTexBundles; n++ ) {
 				if ( pStage->bundle[n].numTexMods ) {
@@ -3607,7 +3745,7 @@ static shader_t *FinishShader( void ) {
 			}
 
 			if ( env_mask == 1 && !pStage->depthFragment ) {
-				if ( def.shader_type >= TYPE_GENERIC_BEGIN && def.shader_type <= TYPE_GENERIC_END  ) {
+				if ( def.shader_type >= TYPE_GENERIC_BEGIN && def.shader_type <= TYPE_GENERIC_END ) {
 					def.shader_type++; // switch to *_ENV version
 					shader.tessFlags |= TESS_NNN | TESS_VPOS;
 					pStage->tessFlags &= ~TESS_ST0;
@@ -3616,45 +3754,45 @@ static shader_t *FinishShader( void ) {
 				}
 			}
 
-			stype = def.shader_type;
 			def.mirror = qfalse;
 			pStage->vk_pipeline[0] = vk_find_pipeline_ext( 0, &def, qtrue );
-			if ( pStage->depthFragment ) {
-				def.shader_type = TYPE_SIGNLE_TEXTURE_DF;
-				pStage->vk_pipeline_df = vk_find_pipeline_ext( 0, &def, qtrue );
-				def.shader_type = stype;
-			}
 			def.mirror = qtrue;
 			pStage->vk_mirror_pipeline[0] = vk_find_pipeline_ext( 0, &def, qfalse );
+
 			if ( pStage->depthFragment ) {
+				def.mirror = qfalse;
+				def.shader_type = TYPE_SIGNLE_TEXTURE_DF;
+				pStage->vk_pipeline_df = vk_find_pipeline_ext( 0, &def, qtrue );
+				def.mirror = qtrue;
 				def.shader_type = TYPE_SIGNLE_TEXTURE_DF;
 				pStage->vk_mirror_pipeline_df = vk_find_pipeline_ext( 0, &def, qfalse );
-				def.shader_type = stype;
 			}
-		}
-	}
 
 #ifdef USE_FOG_COLLAPSE
-	// single-stage, combined fog pipelines for world surfaces
-	if ( vk.maxBoundDescriptorSets >= 6 && stage == 1 && tr.mapLoading && !(shader.contentFlags & CONTENTS_FOG) && fogCollapse ) {
-		Vk_Pipeline_Def def;
-		Vk_Pipeline_Def def_mirror;
+			if ( fogCollapse && tr.numFogs > 0 ) {
+				Vk_Pipeline_Def def;
+				Vk_Pipeline_Def def_mirror;
 
-		shaderStage_t *pStage = &stages[0];
+				vk_get_pipeline_def( pStage->vk_pipeline[0], &def );
+				vk_get_pipeline_def( pStage->vk_mirror_pipeline[0], &def_mirror );
 
-		vk_get_pipeline_def( pStage->vk_pipeline[0], &def );
-		vk_get_pipeline_def( pStage->vk_mirror_pipeline[0], &def_mirror );
+				def.fog_stage = 1;
+				def_mirror.fog_stage = 1;
+				def.acff = pStage->bundle[0].adjustColorsForFog;
+				def_mirror.acff = pStage->bundle[0].adjustColorsForFog;
 
-		def.fog_stage = 1;
-		def_mirror.fog_stage = 1;
-		pStage->vk_pipeline[1] = vk_find_pipeline_ext( 0, &def, qfalse );
-		pStage->vk_mirror_pipeline[1] = vk_find_pipeline_ext( 0, &def_mirror, qfalse );
+				pStage->vk_pipeline[1] = vk_find_pipeline_ext( 0, &def, qfalse );
+				pStage->vk_mirror_pipeline[1] = vk_find_pipeline_ext( 0, &def_mirror, qfalse );
 
-		shader.fogCollapse = qtrue;
-		//stages[0].adjustColorsForFog = ACFF_NONE;
+				pStage->bundle[0].adjustColorsForFog = ACFF_NONE; // will be handled in shader from now
+
+				shader.fogCollapse = qtrue;
+			}
+#endif
+		}
 	}
-#endif // USE_FOG_COLLAPSE
 #endif // USE_VULKAN
+
 #ifdef USE_PMLIGHT
 	FindLightingStages();
 #endif
@@ -3669,10 +3807,10 @@ static shader_t *FinishShader( void ) {
 			if ( stages[ i ].bundle[ n ].image[ 0 ] != NULL ) {
 				lastStage[ n ] = &stages[ i ];
 			}
-			if ( EqualTCgen( n, lastStage[ n ], &stages[ i+1 ] ) ) {
+			if ( EqualTCgen( n, lastStage[ n ], &stages[ i+1 ] ) && (lastStage[n]->tessFlags & (TESS_ST0 << n) ) ) {
 				stages[ i+1 ].tessFlags &= ~(TESS_ST0 << n);
 			}
-			if ( EqualRGBgen( lastStage[n], &stages[ i+1 ] ) && EqualACgen( lastStage[n], &stages[ i+1 ] ) ) {
+			if ( EqualRGBgen( lastStage[n], &stages[ i+1 ] ) && EqualACgen( lastStage[n], &stages[ i+1 ] ) && (lastStage[n]->tessFlags & (TESS_RGBA0 << n) ) ) {
 				stages[ i+1 ].tessFlags &= ~(TESS_RGBA0 << n);
 			}
 		}
@@ -3938,6 +4076,7 @@ static void R_CreateDefaultShading( image_t *image ) {
 	case LIGHTMAP_NONE:
 		stages[ 0 ].bundle[ 0 ].image[ 0 ] = image;
 		stages[ 0 ].active = qtrue;
+		stages[ 0 ].bundle[ 0 ].tcGen = TCGEN_TEXTURE;
 		stages[ 0 ].bundle[ 0 ].rgbGen = CGEN_LIGHTING_DIFFUSE;
 		stages[ 0 ].stateBits = implicitStateBits;
 		break;
@@ -3946,6 +4085,7 @@ static void R_CreateDefaultShading( image_t *image ) {
 	case LIGHTMAP_2D:
 		stages[ 0 ].bundle[ 0 ].image[ 0 ] = image;
 		stages[ 0 ].active = qtrue;
+		stages[ 0 ].bundle[ 0 ].tcGen = TCGEN_TEXTURE;
 		stages[ 0 ].bundle[ 0 ].rgbGen = CGEN_VERTEX;
 		stages[ 0 ].bundle[ 0 ].alphaGen = AGEN_SKIP;
 		stages[ 0 ].stateBits = GLS_DEPTHTEST_DISABLE | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
@@ -3955,6 +4095,7 @@ static void R_CreateDefaultShading( image_t *image ) {
 	case LIGHTMAP_WHITEIMAGE:
 		stages[0].active = qtrue;
 		stages[0].bundle[0].image[0] = image;
+		stages[ 0 ].bundle[ 0 ].tcGen = TCGEN_TEXTURE;
 		stages[0].bundle[ 0 ].rgbGen = CGEN_IDENTITY_LIGHTING;
 		stages[0].stateBits = GLS_DEFAULT;
 		break;
@@ -3963,6 +4104,7 @@ static void R_CreateDefaultShading( image_t *image ) {
 	case LIGHTMAP_BY_VERTEX:
 		stages[ 0 ].bundle[ 0 ].image[ 0 ] = image;
 		stages[ 0 ].active = qtrue;
+		stages[ 0 ].bundle[ 0 ].tcGen = TCGEN_TEXTURE;
 		stages[ 0 ].bundle[ 0 ].rgbGen = CGEN_EXACT_VERTEX;
 		stages[ 0 ].bundle[ 0 ].alphaGen = AGEN_SKIP;
 		stages[ 0 ].stateBits = implicitStateBits;
@@ -3974,12 +4116,14 @@ static void R_CreateDefaultShading( image_t *image ) {
 		if ( implicitStateBits & ( GLS_ATEST_BITS | GLS_SRCBLEND_BITS | GLS_DSTBLEND_BITS ) ) {
 			stages[ 0 ].bundle[ 0 ].image[ 0 ] = image;
 			stages[ 0 ].active = qtrue;
+			stages[ 0 ].bundle[ 0 ].tcGen = TCGEN_TEXTURE;
 			stages[ 0 ].bundle[ 0 ].rgbGen = CGEN_IDENTITY;
 			stages[ 0 ].stateBits = implicitStateBits;
 
 			stages[ 1 ].bundle[ 0 ].image[ 0 ] = tr.lightmaps[ shader.lightmapIndex ];
 			stages[ 1 ].bundle[ 0 ].isLightmap = qtrue;
 			stages[ 1 ].active = qtrue;
+			stages[ 1 ].bundle[ 0 ].tcGen = TCGEN_LIGHTMAP;
 			stages[ 1 ].bundle[ 0 ].rgbGen = CGEN_IDENTITY;
 			stages[ 1 ].stateBits = GLS_DEFAULT | GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO | GLS_DEPTHFUNC_EQUAL;
 		}
@@ -3989,11 +4133,13 @@ static void R_CreateDefaultShading( image_t *image ) {
 			stages[ 0 ].bundle[ 0 ].image[ 0 ] = tr.lightmaps[ shader.lightmapIndex ];
 			stages[ 0 ].bundle[ 0 ].isLightmap = qtrue;
 			stages[ 0 ].active = qtrue;
+			stages[ 0 ].bundle[ 0 ].tcGen = TCGEN_LIGHTMAP;
 			stages[ 0 ].bundle[ 0 ].rgbGen = CGEN_IDENTITY;
 			stages[ 0 ].stateBits = GLS_DEFAULT;
 
 			stages[ 1 ].bundle[ 0 ].image[ 0 ] = image;
 			stages[ 1 ].active = qtrue;
+			stages[ 1 ].bundle[ 0 ].tcGen = TCGEN_TEXTURE;
 			stages[ 1 ].bundle[ 0 ].rgbGen = CGEN_IDENTITY;
 			stages[ 1 ].stateBits = GLS_DEFAULT | GLS_SRCBLEND_DST_COLOR | GLS_DSTBLEND_ZERO;
 		}
@@ -4222,7 +4368,7 @@ shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImag
 
 
 qhandle_t RE_RegisterShaderFromImage(const char *name, int lightmapIndex, image_t *image, qboolean mipRawImage) {
-	int hash;
+	unsigned long hash;
 	shader_t	*sh;
 
 	hash = generateHashValue(name, FILE_HASH_SIZE);
@@ -4709,12 +4855,14 @@ static void CreateInternalShaders( void ) {
 	// init the default shader
 	InitShader( "<default>", LIGHTMAP_NONE );
 	stages[0].bundle[0].image[0] = tr.defaultImage;
+	stages[0].bundle[0].tcGen = TCGEN_TEXTURE;
 	stages[0].active = qtrue;
 	stages[0].stateBits = GLS_DEFAULT;
 	tr.defaultShader = FinishShader();
 
 	InitShader( "<white>", LIGHTMAP_NONE );
 	stages[0].bundle[0].image[0] = tr.whiteImage;
+	stages[0].bundle[0].tcGen = TCGEN_TEXTURE;
 	stages[0].active = qtrue;
 	stages[0].bundle[0].rgbGen = CGEN_EXACT_VERTEX;
 	stages[0].stateBits = GLS_DEPTHTEST_DISABLE | GLS_SRCBLEND_SRC_ALPHA | GLS_DSTBLEND_ONE_MINUS_SRC_ALPHA;
@@ -4723,6 +4871,7 @@ static void CreateInternalShaders( void ) {
 	// shadow shader is just a marker
 	InitShader( "<stencil shadow>", LIGHTMAP_NONE );
 	stages[0].bundle[0].image[0] = tr.defaultImage;
+	stages[0].bundle[0].tcGen = TCGEN_TEXTURE;
 	stages[0].active = qtrue;
 	stages[0].stateBits = GLS_DEFAULT;
 	shader.sort = SS_STENCIL_SHADOW;
@@ -4730,6 +4879,7 @@ static void CreateInternalShaders( void ) {
 
 	InitShader( "<cinematic>", LIGHTMAP_NONE );
 	stages[0].bundle[0].image[0] = tr.defaultImage; // will be updated by specific cinematic images
+	stages[0].bundle[0].tcGen = TCGEN_TEXTURE;
 	stages[0].active = qtrue;
 	stages[0].bundle[0].rgbGen = CGEN_IDENTITY_LIGHTING;
 	stages[0].stateBits = GLS_DEPTHTEST_DISABLE;

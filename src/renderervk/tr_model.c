@@ -648,7 +648,7 @@ qhandle_t RE_RegisterModel( const char *name ) {
 	return hModel;
 }
 
-#include "anorms256.h"
+#include "../renderercommon/anorms256.h"
 
 /*
 =================

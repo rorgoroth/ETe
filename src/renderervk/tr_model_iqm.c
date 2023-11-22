@@ -33,7 +33,7 @@ static float identityMatrix[12] = {
 	0, 0, 1, 0
 };
 
-static qboolean IQM_CheckRange( iqmHeader_t *header, int offset,
+static qboolean IQM_CheckRange( const iqmHeader_t *header, int offset,
 				int count, int size ) {
 	// return true if the range specified by offset, count and size
 	// doesn't fit into the file

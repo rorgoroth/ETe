@@ -449,10 +449,17 @@ void RB_RenderFlares (void) {
 		return;
 	}
 
+	// Reset currentEntity to world so that any previously referenced entities
+	// don't have influence on the rendering of these flares (i.e. RF_ renderer flags).
+	backEnd.currentEntity = &tr.worldEntity;
+	backEnd.orientation = backEnd.viewParms.world;
+
+#ifdef USE_FBO
 	// we can't read from multisampled renderbuffer storage
 	if ( blitMSfbo ) {
 		FBO_BlitMS( qtrue );
 	}
+#endif
 
 	// (SA) turned light flares back on.  must evaluate problem id had with this
 	RB_AddDlightFlares();
@@ -489,10 +496,12 @@ void RB_RenderFlares (void) {
 		prev = &f->next;
 	}
 
+#ifdef USE_FBO
 	// bind primary framebuffer again
 	if ( blitMSfbo ) {
 		FBO_BindMain();
 	}
+#endif
 
 	if ( !draw ) {
 		return;		// none visible

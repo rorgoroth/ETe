@@ -33,7 +33,7 @@ static float identityMatrix[12] = {
 	0, 0, 1, 0
 };
 
-static qboolean IQM_CheckRange( iqmHeader_t *header, int offset,
+static qboolean IQM_CheckRange( const iqmHeader_t *header, int offset,
 				int count, int size ) {
 	// return true if the range specified by offset, count and size
 	// doesn't fit into the file
@@ -1061,12 +1061,11 @@ void R_AddIQMSurfaces( trRefEntity_t *ent ) {
 	vec3_t			bounds[2];
 	iqmData_t		*data;
 	srfIQModel_t		*surface;
-	int			i, j;
+	int			i;
 	qboolean		personalModel;
 	int			cull;
 	int			fogNum;
 	shader_t		*shader;
-	skin_t			*skin;
 #ifdef USE_PMLIGHT
 	dlight_t		*dl;
 	int				n;
@@ -1140,16 +1139,53 @@ void R_AddIQMSurfaces( trRefEntity_t *ent ) {
 			shader = R_GetShaderByHandle( ent->e.customShader );
 		else if(ent->e.customSkin > 0 && ent->e.customSkin < tr.numSkins)
 		{
-			skin = R_GetSkinByHandle(ent->e.customSkin);
+			skin_t *skin = R_GetSkinByHandle(ent->e.customSkin);
+			int hash;
+			int j;
 			shader = tr.defaultShader;
 
-			for(j = 0; j < skin->numSurfaces; j++)
+//----(SA)	added blink
+			if (ent->e.renderfx & RF_BLINK)
 			{
-				if (!strcmp(skin->surfaces[j].name, surface->name))
+				const char *s = va("%s_b", surface->name); // append '_b' for 'blink'
+				hash = ri.MSG_HashKey(s, strlen(s));
+				for (j = 0 ; j < skin->numSurfaces ; j++)
 				{
-					shader = skin->surfaces[j].shader;
-					break;
+					if (hash != skin->surfaces[j].hash)
+					{
+						continue;
+					}
+					if (!strcmp( skin->surfaces[j].name, s))
+					{
+						shader = skin->surfaces[j].shader;
+						break;
+					}
 				}
+			}
+
+			if ( shader == tr.defaultShader ) {    // blink reference in skin was not found
+				hash = ri.MSG_HashKey( surface->name, sizeof( surface->name ) );
+				for(j = 0; j < skin->numSurfaces; j++)
+				{
+					// the names have both been lowercased
+					if (hash != skin->surfaces[j].hash)
+					{
+						continue;
+					}
+					if (!strcmp(skin->surfaces[j].name, surface->name))
+					{
+						shader = skin->surfaces[j].shader;
+						break;
+					}
+				}
+			}
+
+//----(SA)	end
+
+			if ( shader == tr.defaultShader ) {
+				ri.Printf( PRINT_DEVELOPER, "WARNING: no shader for surface %s in skin %s\n", surface->name, skin->name );
+			} else if ( shader->defaultShader ) {
+				ri.Printf( PRINT_DEVELOPER, "WARNING: shader %s in skin %s not found\n", shader->name, skin->name );
 			}
 		} else {
 			shader = surface->shader;
