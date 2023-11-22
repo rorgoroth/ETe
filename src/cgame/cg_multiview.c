@@ -44,11 +44,7 @@ void CG_mvNew_f( void ) {
 	if ( cg.demoPlayback || trap_Argc() < 2 ) {
 		return;
 	} else {
-		int pID;
-		char aName[64];
-
-		trap_Args( aName, sizeof( aName ) );
-		pID = CG_findClientNum( aName );
+		int pID = CG_findClientNum( CG_ConcatArgs(1) );
 
 		if ( pID >= 0 && !CG_mvMergedClientLocate( pID ) ) {
 			trap_SendClientCommand( va( "mvadd %d\n", pID ) );
@@ -64,10 +60,7 @@ void CG_mvDelete_f( void ) {
 		int pID = -1;
 
 		if ( trap_Argc() > 1 ) {
-			char aName[64];
-
-			trap_Args( aName, sizeof( aName ) );
-			pID = CG_findClientNum( aName );
+			pID = CG_findClientNum( CG_ConcatArgs(1) );
 		} else {
 			cg_window_t *w = cg.mvCurrentActive;
 			if ( w != NULL ) {

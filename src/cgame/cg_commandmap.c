@@ -30,7 +30,6 @@ If you have questions concerning this license or the applicable additional terms
 
 static mapEntityData_t mapEntities[MAX_GENTITIES];
 static int mapEntityCount = 0;
-static int mapEntityTime = 0;
 static qboolean expanded = qfalse;
 
 extern playerInfo_t pi;
@@ -145,8 +144,8 @@ void CG_AdjustAutomapZoom( int zoomIn ) {
 }
 // END		xkan, 9/19/2002
 
-void CG_ParseMapEntity( int* mapEntityCount, int* offset, team_t team ) {
-	mapEntityData_t* mEnt = &mapEntities[( *mapEntityCount )];
+void CG_ParseMapEntity( int* _mapEntityCount, int* offset, team_t team ) {
+	mapEntityData_t* mEnt = &mapEntities[( *_mapEntityCount )];
 	char buffer[16];
 
 	trap_Argv( ( *offset )++, buffer, 16 );
@@ -198,7 +197,7 @@ void CG_ParseMapEntity( int* mapEntityCount, int* offset, team_t team ) {
 
 	mEnt->team = team;
 
-	( *mapEntityCount )++;
+	( *_mapEntityCount )++;
 }
 
 /*
@@ -210,7 +209,6 @@ void CG_ParseMapEntityInfo( int axis_number, int allied_number ) {
 	int i, offset;
 
 	mapEntityCount = 0;
-	mapEntityTime = cg.time;
 
 	offset = 3;
 
@@ -468,7 +466,7 @@ void CG_DrawMapEntity( mapEntityData_t *mEnt, float x, float y, float w, float h
 				mEnt->automapTransformed[1] = ( ( cg.predictedPlayerEntity.lerpOrigin[1] - cg.mapcoordsMins[1] ) * cg.mapcoordsScale[1] ) * h * scissor->zoomFactor;
 			}
 
-			mEnt->yaw = cg.predictedPlayerState.viewangles[YAW];
+			mEnt->yaw = (int)cg.predictedPlayerState.viewangles[YAW];
 		} else if ( ci->team == snap->ps.persistant[PERS_TEAM] && cent->currentValid ) {
 			if ( !scissor ) {
 				mEnt->transformed[0] = ( ( cent->lerpOrigin[0] - cg.mapcoordsMins[0] ) * cg.mapcoordsScale[0] ) * w;
@@ -478,7 +476,7 @@ void CG_DrawMapEntity( mapEntityData_t *mEnt, float x, float y, float w, float h
 				mEnt->automapTransformed[1] = ( ( cent->lerpOrigin[1] - cg.mapcoordsMins[1] ) * cg.mapcoordsScale[1] ) * h * scissor->zoomFactor;
 			}
 
-			mEnt->yaw = cent->lerpAngles[YAW];
+			mEnt->yaw = (int)cent->lerpAngles[YAW];
 		} else {
 			// Gordon: only see revivables for own team, duh :)
 			if ( mEnt->type == ME_PLAYER_REVIVE ) {
@@ -885,7 +883,7 @@ void CG_DrawMap( float x, float y, float w, float h, int mEntFilter, mapScissor_
 			} else {
 				trap_R_DrawStretchPic( sc_x, sc_y, sc_w, sc_h, s0, t0, s1, t1, cgs.media.commandCentreAutomapShader[0] );
 			}
-			trap_R_DrawStretchPic( 0, 0, 0, 0, 0, 0, 0, 0, cgs.media.whiteShader ); // HACK : the code above seems to do weird things to
+			//trap_R_DrawStretchPic( 0, 0, 0, 0, 0, 0, 0, 0, cgs.media.whiteShader ); // HACK : the code above seems to do weird things to
 																					// the next trap_R_DrawStretchPic issued. This works
 																					// around this.
 		}
@@ -1478,7 +1476,7 @@ mapEntityData_t* CG_ScanForCommandCentreEntity( void ) {
 }
 
 typedef enum {
-	MT_CONSTRUCT,
+	MT_CONSTRUCT = 0,
 	MT_CONSTRUCT_BARE,
 	MT_DESTRUCT,
 	MT_DESTRUCT_BARE,

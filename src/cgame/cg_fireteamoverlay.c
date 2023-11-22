@@ -105,7 +105,7 @@ void CG_SortClientFireteam() {
 }
 
 // Parses fireteam servercommand
-void CG_ParseFireteams() {
+void CG_ParseFireteams(void) {
 	int i, j;
 	char* s;
 	const char* p;

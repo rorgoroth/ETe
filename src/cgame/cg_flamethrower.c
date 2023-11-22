@@ -732,7 +732,7 @@ void CG_AddFlameSpriteToScene( flameChunk_t *f, float lifeFrac, float alpha ) {
 		frameNum = NUM_FLAME_SPRITES - 1;
 	}
 
-	pPolyBuffer = CG_PB_FindFreePolyBuffer( cg_fxflags & 1 ? getTestShader() : flameShaders[frameNum], 4, 6 );
+	pPolyBuffer = CG_PB_FindFreePolyBuffer( flameShaders[frameNum], 4, 6 );
 
 	pPolyBuffer->color[pPolyBuffer->numVerts + 0][0] = alphaChar;
 	pPolyBuffer->color[pPolyBuffer->numVerts + 0][1] = alphaChar;
@@ -756,7 +756,7 @@ void CG_AddFlameSpriteToScene( flameChunk_t *f, float lifeFrac, float alpha ) {
 	}
 
 
-	if ( ( rotatingFlames ) && ( !( cg_fxflags & 1 ) ) ) { // JPW NERVE no rotate for alt flame shaders
+	if ( ( rotatingFlames ) ) {
 		vectoangles( cg.refdef_current->viewaxis[0], rotate_ang );
 		rotate_ang[ROLL] += f->rollAngle;
 		AngleVectors( rotate_ang, NULL, rright, rup );

@@ -260,7 +260,7 @@ void CG_Respawn( qboolean revived ) {
 	cg.weaponSelect = cg.snap->ps.weapon;
 	// DHM - Nerve :: Clear even more things on respawn
 	cg.zoomedBinoc = qfalse;
-	cg.zoomedScope = qfalse;
+	cg.zoomedScope = 0;
 	cg.zoomTime = 0;
 	cg.zoomval = 0;
 

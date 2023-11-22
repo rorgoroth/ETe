@@ -37,18 +37,6 @@ If you have questions concerning this license or the applicable additional terms
 
 vec3_t ejectBrassCasingOrigin;
 
-//----(SA)
-// forward decs
-static int getAltWeapon( int weapnum );
-int getEquivWeapon( int weapnum );
-int CG_WeaponIndex( int weapnum, int *bank, int *cycle );
-static qboolean CG_WeaponHasAmmo( int i );
-char cg_fxflags;
-extern int weapBanksMultiPlayer[MAX_WEAP_BANKS_MP][MAX_WEAPS_IN_BANK_MP]; // JPW NERVE moved to bg_misc.c so I can get a droplist
-// jpw
-
-//----(SA)	end
-
 /*
 ==============
 CG_StartWeaponAnim
@@ -145,7 +133,6 @@ void CG_MachineGunEjectBrassNew( centity_t *cent ) {
 	le->angles.trDelta[2] = 0;
 
 	le->leFlags = LEF_TUMBLE;
-
 
 	{
 		int contents;
@@ -555,7 +542,6 @@ void CG_PyroSmokeTrail( centity_t *ent, const weaponInfo_t *wi ) {
 }
 // jpw
 
-
 // Ridah, new trail effects
 /*
 ==========================
@@ -926,7 +912,7 @@ static qboolean CG_ParseWeaponConfig( const char *filename, weaponInfo_t *wi ) {
 	}
 
 	trap_FS_Read( text, len, f );
-	text[len] = 0;
+	text[len] = '\0';
 	trap_FS_FCloseFile( f );
 
 	// parse the text
@@ -959,7 +945,6 @@ static qboolean CG_ParseWeaponConfig( const char *filename, weaponInfo_t *wi ) {
 		}
 		Com_Printf( "unknown token in weapon cfg '%s' is %s\n", token, filename );
 	}
-
 
 	for ( i = 0 ; i < MAX_WP_ANIMATIONS  ; i++ ) {
 
@@ -998,7 +983,6 @@ static qboolean CG_ParseWeaponConfig( const char *filename, weaponInfo_t *wi ) {
 			wi->weapAnimations[i].loopFrames = 0;
 		}
 
-
 		// store animation/draw bits in '.moveSpeed'
 
 		wi->weapAnimations[i].moveSpeed = 0;
@@ -1024,7 +1008,6 @@ static qboolean CG_ParseWeaponConfig( const char *filename, weaponInfo_t *wi ) {
 			}
 			wi->weapAnimations[i].moveSpeed |= ( ( atoi( token ) ) << 8 ); // use 2nd byte for draw bits
 		}
-
 	}
 
 	if ( i != MAX_WP_ANIMATIONS ) {
@@ -1032,12 +1015,11 @@ static qboolean CG_ParseWeaponConfig( const char *filename, weaponInfo_t *wi ) {
 		return qfalse;
 	}
 
-
 	return qtrue;
 }
 
 
-static qboolean CG_RW_ParseError( int handle, char *format, ... ) {
+static qboolean FORMAT_PRINTF(2,3) CG_RW_ParseError( int handle, const char *format, ... ) {
 	int line;
 	char filename[128];
 	va_list argptr;
@@ -1525,7 +1507,7 @@ CG_RegisterWeapon
 */
 void CG_RegisterWeapon( int weaponNum, qboolean force ) {
 	weaponInfo_t    *weaponInfo;
-	char            *filename;
+	const char *filename;
 
 	if ( weaponNum <= 0 || weaponNum >= WP_NUM_WEAPONS ) {
 		return;
@@ -1655,7 +1637,6 @@ VIEW WEAPON
 ========================================================================================
 */
 
-
 //
 // weapon animations
 //
@@ -1675,6 +1656,11 @@ qboolean CG_GetPartFramesFromWeap( centity_t *cent, refEntity_t *part, refEntity
 
 	if ( partid == W_MAX_PARTS ) {
 		return qtrue;   // primary weap model drawn for all frames right now
+	}
+
+	if ( !anim )
+	{
+		return qfalse;
 	}
 
 	// check draw bit
@@ -2867,18 +2853,6 @@ WEAPON SELECTION
 ==============================================================================
 */
 
-#define WP_ICON_X       38  // new sizes per MK
-#define WP_ICON_X_WIDE  72  // new sizes per MK
-#define WP_ICON_Y       38
-#define WP_ICON_SPACE_Y 10
-#define WP_DRAW_X       640 - WP_ICON_X - 4 // 4 is 'selected' border width
-#define WP_DRAW_X_WIDE  640 - WP_ICON_X_WIDE - 4
-#define WP_DRAW_Y       4
-
-// secondary fire icons
-#define WP_ICON_SEC_X   18  // new sizes per MK
-#define WP_ICON_SEC_Y   18
-
 /*
 ==============
 CG_WeaponHasAmmo
@@ -3104,7 +3078,7 @@ static int getPrevBankWeap( int bank, int cycle, qboolean sameBankPosition ) {
 getAltWeapon
 ==============
 */
-static int getAltWeapon( int weapnum ) {
+static int CG_GetAltWeapon( int weapnum ) {
 /*	if(weapnum > MAX_WEAP_ALTS) Gordon: seems unneeded
 		return weapnum;*/
 
@@ -3124,7 +3098,7 @@ getEquivWeapon
 	No equivalent available will return the weapnum passed in.
 ==============
 */
-int getEquivWeapon( int weapnum ) {
+static int CG_GetEquivWeapon( int weapnum ) {
 	int num = weapnum;
 
 	switch ( weapnum ) {
@@ -3144,9 +3118,6 @@ int getEquivWeapon( int weapnum ) {
 	}
 	return num;
 }
-
-
-
 
 /*
 ==============
@@ -3229,7 +3200,7 @@ void CG_PlaySwitchSound( int lastweap, int newweap ) {
 
 	switchsound = cgs.media.selectSound;
 
-	if ( getAltWeapon( lastweap ) == newweap ) { // alt switch
+	if ( CG_GetAltWeapon( lastweap ) == newweap ) { // alt switch
 		switch ( newweap ) {
 		case WP_SILENCER:
 		case WP_LUGER:
@@ -3457,7 +3428,7 @@ void CG_AltWeapon_f( void ) {
 
 	original = cg.weaponSelect;
 
-	num = getAltWeapon( original );
+	num = CG_GetAltWeapon( original );
 
 	if ( original == WP_BINOCULARS ) {
 		/*if(cg.snap->ps.eFlags & EF_ZOOMING) {
@@ -3532,7 +3503,7 @@ void CG_NextWeap( qboolean switchBanks ) {
 
 	// if you're using an alt mode weapon, try switching back to the parent first
 	if ( curweap >= WP_BEGINSECONDARY && curweap <= WP_LASTSECONDARY ) {
-		num = getAltWeapon( curweap );    // base any further changes on the parent
+		num = CG_GetAltWeapon( curweap );    // base any further changes on the parent
 		if ( CG_WeaponSelectable( num ) ) {  // the parent was selectable, drop back to that
 			CG_FinishWeaponChange( curweap, num );
 			return;
@@ -3711,7 +3682,7 @@ void CG_PrevWeap( qboolean switchBanks ) {
 
 	// if you're using an alt mode weapon, try switching back to the parent first
 	if ( curweap >= WP_BEGINSECONDARY && curweap <= WP_LASTSECONDARY ) {
-		num = getAltWeapon( curweap );    // base any further changes on the parent
+		num = CG_GetAltWeapon( curweap );    // base any further changes on the parent
 		if ( CG_WeaponSelectable( num ) ) {  // the parent was selectable, drop back to that
 			CG_FinishWeaponChange( curweap, num );
 			return;
@@ -4110,7 +4081,7 @@ void CG_WeaponBank_f( void ) {
 
 	bank = atoi( CG_Argv( 1 ) );
 
-	if ( bank <= 0 || bank > MAX_WEAP_BANKS_MP ) {
+	if ( bank <= 0 || bank >= MAX_WEAP_BANKS_MP ) {
 		return;
 	}
 
@@ -4177,8 +4148,6 @@ CG_Weapon_f
 */
 void CG_Weapon_f( void ) {
 	int num;
-//	int bank = 0, cycle = 0, newbank = 0, newcycle = 0;
-//	qboolean banked = qfalse;
 
 	if ( !cg.snap ) {
 		return;
@@ -4205,53 +4174,7 @@ void CG_Weapon_f( void ) {
 	if ( num < MAX_WEAP_BANKS_MP ) {
 		CG_WeaponBank_f();
 	}
-	return;
 // jpw
-
-/*	cg.weaponSelectTime = cg.time;	// flash the current weapon icon
-
-	// Don't try to switch when in the middle of reloading.
-	if ( cg.snap->ps.weaponstate == WEAPON_RELOADING )
-		return;
-
-
-	if ( num <= WP_NONE || num > WP_NUM_WEAPONS ) {
-		return;
-	}
-
-	curweap = cg.weaponSelect;
-
-	CG_WeaponIndex(curweap, &bank, &cycle);		// get bank/cycle of current weapon
-	banked = CG_WeaponIndex(num, &newbank, &newcycle);		// get bank/cycle of requested weapon
-
-	// the new weapon was not found in the reglar banks
-	// assume the player want's to go directly to it if possible
-	if(!banked) {
-		if(CG_WeaponSelectable(num)) {
-			CG_FinishWeaponChange(curweap, num);
-			return;
-		}
-	}
-
-	if(bank != newbank)
-		cycle = newcycle - 1;	//	drop down one from the requested weap's cycle so it will
-								//	try to initially cycle up to the requested weapon
-
-	for(i = 0; i < MAX_WEAPS_IN_BANK; i++) {
-		num = getNextWeapInBank(newbank, cycle+i);
-
-		if(num == curweap)	// no other weapons in bank
-			return;
-
-		if(CG_WeaponSelectable(num)) {
-			break;
-		}
-	}
-
-	if(i == MAX_WEAPS_IN_BANK)
-		return;
-
-	CG_FinishWeaponChange(curweap, num);*/
 }
 
 /*
@@ -4334,7 +4257,7 @@ void CG_OutOfAmmoChange( qboolean allowforceswitch ) {
 		// if you're using an alt mode weapon, try switching back to the parent
 		// otherwise, switch to the equivalent if you've got it
 		if ( cg.weaponSelect >= WP_BEGINSECONDARY && cg.weaponSelect <= WP_LASTSECONDARY ) {
-			cg.weaponSelect = equiv = getAltWeapon( cg.weaponSelect );    // base any further changes on the parent
+			cg.weaponSelect = equiv = CG_GetAltWeapon( cg.weaponSelect );    // base any further changes on the parent
 			if ( CG_WeaponSelectable( equiv ) ) {    // the parent was selectable, drop back to that
 				CG_FinishWeaponChange( cg.predictedPlayerState.weapon, cg.weaponSelect ); //----(SA)
 				return;
@@ -4343,7 +4266,7 @@ void CG_OutOfAmmoChange( qboolean allowforceswitch ) {
 
 
 		// now try the opposite team's equivalent weap
-		equiv = getEquivWeapon( cg.weaponSelect );
+		equiv = CG_GetEquivWeapon( cg.weaponSelect );
 
 		if ( equiv != cg.weaponSelect && CG_WeaponSelectable( equiv ) ) {
 			cg.weaponSelect = equiv;

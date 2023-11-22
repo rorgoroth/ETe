@@ -69,7 +69,7 @@ void CG_LoadingString( const char *s ) {
 	Q_strncpyz( cg.infoScreenText, s, sizeof( cg.infoScreenText ) );
 
 	if ( s && *s ) {
-		CG_Printf( va( "LOADING... %s\n",s ) );   //----(SA)	added so you can see from the console what's going on
+		CG_Printf( "LOADING... %s\n", s );   //----(SA)	added so you can see from the console what's going on
 
 	}
 	// Arnout: no need for this
@@ -226,7 +226,7 @@ void CG_DemoClick( int key, qboolean down ) {
 
 			cgs.thirdpersonUpdate = milli + DEMO_THIRDPERSONUPDATE;
 			range -= ( ( range >= 4 * DEMO_RANGEDELTA ) ? DEMO_RANGEDELTA : ( range - DEMO_RANGEDELTA ) );
-			trap_Cvar_Set( "cg_thirdPersonRange", va( "%f", range ) );
+			trap_Cvar_Set( "cg_thirdPersonRange", va( "%g", range ) );
 		}
 		return;
 	case K_DOWNARROW:
@@ -235,7 +235,7 @@ void CG_DemoClick( int key, qboolean down ) {
 
 			cgs.thirdpersonUpdate = milli + DEMO_THIRDPERSONUPDATE;
 			range += ( ( range >= 120 * DEMO_RANGEDELTA ) ? 0 : DEMO_RANGEDELTA );
-			trap_Cvar_Set( "cg_thirdPersonRange", va( "%f", range ) );
+			trap_Cvar_Set( "cg_thirdPersonRange", va( "%g", range ) );
 		}
 		return;
 	case K_RIGHTARROW:
@@ -246,7 +246,7 @@ void CG_DemoClick( int key, qboolean down ) {
 			if ( angle < 0 ) {
 				angle += 360.0f;
 			}
-			trap_Cvar_Set( "cg_thirdPersonAngle", va( "%f", angle ) );
+			trap_Cvar_Set( "cg_thirdPersonAngle", va( "%g", angle ) );
 		}
 		return;
 	case K_LEFTARROW:
@@ -257,7 +257,7 @@ void CG_DemoClick( int key, qboolean down ) {
 			if ( angle >= 360.0f ) {
 				angle -= 360.0f;
 			}
-			trap_Cvar_Set( "cg_thirdPersonAngle", va( "%f", angle ) );
+			trap_Cvar_Set( "cg_thirdPersonAngle", va( "%g", angle ) );
 		}
 		return;
 
@@ -279,7 +279,7 @@ void CG_DemoClick( int key, qboolean down ) {
 					tscale -= 0.1f;
 				}
 			} else { tscale -= 1.0;}
-			trap_Cvar_Set( "timescale", va( "%f", tscale ) );
+			trap_Cvar_Set( "timescale", va( "%g", tscale ) );
 			cgs.timescaleUpdate = cg.time + (int)( 1000.0f * tscale );
 		}
 		return;
@@ -292,13 +292,13 @@ void CG_DemoClick( int key, qboolean down ) {
 		}       // Roll over into timescale changes
 	case K_KP_LEFTARROW:
 		if ( !down && cg_timescale.value > 0.1f ) {
-			trap_Cvar_Set( "timescale", va( "%f", cg_timescale.value - 0.1f ) );
+			trap_Cvar_Set( "timescale", va( "%g", cg_timescale.value - 0.1f ) );
 			cgs.timescaleUpdate = cg.time + (int)( 1000.0f * cg_timescale.value - 0.1f );
 		}
 		return;
 	case K_KP_UPARROW:
 		if ( !down ) {
-			trap_Cvar_Set( "timescale", va( "%f", cg_timescale.value + 1.0f ) );
+			trap_Cvar_Set( "timescale", va( "%g", cg_timescale.value + 1.0f ) );
 			cgs.timescaleUpdate = cg.time + (int)( 1000.0f * cg_timescale.value + 1.0f );
 		}
 		return;
@@ -311,7 +311,7 @@ void CG_DemoClick( int key, qboolean down ) {
 		}       // Roll over into timescale changes
 	case K_KP_RIGHTARROW:
 		if ( !down ) {
-			trap_Cvar_Set( "timescale", va( "%f", cg_timescale.value + 0.1f ) );
+			trap_Cvar_Set( "timescale", va( "%g", cg_timescale.value + 0.1f ) );
 			cgs.timescaleUpdate = cg.time + (int)( 1000.0f * cg_timescale.value + 0.1f );
 		}
 		return;
@@ -854,7 +854,7 @@ void CG_DemoHelpDraw() {
 		for ( i = 0; i < sizeof( help ) / sizeof( char * ); i++ ) {
 			y += tSpacing;
 			if ( help[i] != NULL ) {
-				CG_Text_Paint_Ext( x, y, tScale, tScale, tColor, (char*)help[i], 0.0f, 0, tStyle, tFont );
+				CG_Text_Paint_Ext( x, y, tScale, tScale, tColor, help[i], 0.0f, 0, tStyle, tFont );
 			}
 		}
 
@@ -862,7 +862,7 @@ void CG_DemoHelpDraw() {
 			for ( i = 0; i < sizeof( mvhelp ) / sizeof( char * ); i++ ) {
 				y += tSpacing;
 				if ( mvhelp[i] != NULL ) {
-					CG_Text_Paint_Ext( x, y, tScale, tScale, tColor, (char*)mvhelp[i], 0.0f, 0, tStyle, tFont );
+					CG_Text_Paint_Ext( x, y, tScale, tScale, tColor, mvhelp[i], 0.0f, 0, tStyle, tFont );
 				}
 			}
 		}

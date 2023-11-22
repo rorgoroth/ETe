@@ -193,7 +193,7 @@ vmCvar_t cg_blood;
 vmCvar_t cg_predictItems;
 vmCvar_t cg_deferPlayers;
 vmCvar_t cg_drawTeamOverlay;
-vmCvar_t cg_enableBreath;
+//vmCvar_t cg_enableBreath;
 vmCvar_t cg_autoactivate;
 vmCvar_t cg_blinktime;      //----(SA)	added
 
@@ -445,7 +445,7 @@ static const vmCvarTableItem_t cg_cvars[] = {
 	{ &cg_stats, "cg_stats", "0", 0 },
 	{ &cg_blinktime, "cg_blinktime", "100", CVAR_ARCHIVE},         //----(SA)	added
 
-	{ &cg_enableBreath, "cg_enableBreath", "1", CVAR_SERVERINFO},
+	//{ &cg_enableBreath, "cg_enableBreath", "1", CVAR_SERVERINFO},
 	{ &cg_cameraOrbit, "cg_cameraOrbit", "0", CVAR_CHEAT},
 	{ &cg_cameraOrbitDelay, "cg_cameraOrbitDelay", "50", CVAR_ARCHIVE},
 	{ &cg_timescaleFadeEnd, "cg_timescaleFadeEnd", "1", 0},
@@ -654,7 +654,7 @@ int CG_LastAttacker( void ) {
 	return( ( !cg.attackerTime ) ? -1 : cg.snap->ps.persistant[PERS_ATTACKER] );
 }
 
-void QDECL CG_Printf( const char *msg, ... ) {
+void FORMAT_PRINTF(1, 2) QDECL CG_Printf( const char *msg, ... ) {
 	va_list argptr;
 	char text[1024];
 
@@ -679,7 +679,7 @@ void QDECL CG_Printf( const char *msg, ... ) {
 	trap_Print( text );
 }
 
-void NORETURN QDECL CG_Error( const char *msg, ... ) {
+void NORETURN FORMAT_PRINTF(1, 2) QDECL CG_Error( const char *msg, ... ) {
 	va_list argptr;
 	char text[1024];
 
@@ -738,6 +738,39 @@ const char *CG_Argv( int arg ) {
 	trap_Argv( arg, buffer, sizeof( buffer ) );
 
 	return buffer;
+}
+
+
+/*
+==================
+CG_ConcatArgs
+==================
+*/
+char    *CG_ConcatArgs( int start ) {
+	int i, c, tlen;
+	static char line[BIG_INFO_STRING];
+	int len;
+	char arg[MAX_STRING_CHARS];
+
+	len = 0;
+	c = trap_Argc();
+	for ( i = start ; i < c ; i++ ) {
+		trap_Argv( i, arg, sizeof( arg ) );
+		tlen = (int)strlen( arg );
+		if ( len + tlen >= sizeof(line) - 1 ) {
+			break;
+		}
+		memcpy( line + len, arg, tlen );
+		len += tlen;
+		if ( i != c - 1 ) {
+			line[len] = ' ';
+			len++;
+		}
+	}
+
+	line[len] = '\0';
+
+	return line;
 }
 
 
@@ -1019,7 +1052,7 @@ static void CG_RegisterItemSounds( int itemNum ) {
 			return;
 		}
 		memcpy( data, start, len );
-		data[len] = 0;
+		data[len] = '\0';
 		if ( *s ) {
 			s++;
 		}
@@ -1272,7 +1305,7 @@ void WM_RegisterWeaponTypeShaders();
 
 static void CG_RegisterGraphics( void ) {
 	int i;
-	static char     *sb_nums[11] = {
+	static const char     *sb_nums[11] = {
 		"gfx/2d/numbers/zero_32b",
 		"gfx/2d/numbers/one_32b",
 		"gfx/2d/numbers/two_32b",
@@ -1342,8 +1375,6 @@ static void CG_RegisterGraphics( void ) {
 	}
 
 	cgs.media.fleshSmokePuffShader = trap_R_RegisterShader( "fleshimpactsmokepuff" ); // JPW NERVE
-	cgs.media.nerveTestShader = trap_R_RegisterShader( "jpwtest1" );
-	cgs.media.idTestShader = trap_R_RegisterShader( "jpwtest2" );
 	cgs.media.hud1Shader = trap_R_RegisterShader( "jpwhud1" );
 	cgs.media.hud2Shader = trap_R_RegisterShader( "jpwhud2" );
 	cgs.media.hud3Shader = trap_R_RegisterShader( "jpwhud3" );
@@ -2030,30 +2061,6 @@ void CG_QueueMusic( void ) {
 	trap_S_StartBackgroundTrack( parm, "", -2 );  // '-2' for 'queue looping track' (QUEUED_PLAY_LOOPED)
 }
 
-#if 0   //DAJ unused
-char *CG_GetMenuBuffer( const char *filename ) {
-	int len;
-	fileHandle_t f;
-	static char buf[MAX_MENUFILE];
-
-	len = trap_FS_FOpenFile( filename, &f, FS_READ );
-	if ( !f ) {
-		trap_Print( va( S_COLOR_RED "menu file not found: %s, using default\n", filename ) );
-		return NULL;
-	}
-	if ( len >= MAX_MENUFILE ) {
-		trap_Print( va( S_COLOR_RED "menu file too large: %s is %i, max allowed is %i", filename, len, MAX_MENUFILE ) );
-		trap_FS_FCloseFile( f );
-		return NULL;
-	}
-
-	trap_FS_Read( buf, len, f );
-	buf[len] = 0;
-	trap_FS_FCloseFile( f );
-
-	return buf;
-}
-#endif
 //
 // ==============================
 // new hud stuff ( mission pack )
@@ -2277,21 +2284,21 @@ void CG_LoadMenus( const char *menuFile ) {
 
 	len = trap_FS_FOpenFile( menuFile, &f, FS_READ );
 	if ( !f ) {
-		trap_Error( va( S_COLOR_YELLOW "menu file not found: %s, using default\n", menuFile ) );
+		CG_Printf( S_COLOR_YELLOW "menu file not found: %s, using default\n", menuFile );
 		len = trap_FS_FOpenFile( "ui/hud.txt", &f, FS_READ );
 		if ( !f ) {
-			trap_Error( S_COLOR_RED "default menu file not found: ui/hud.txt, unable to continue!\n" );
+			CG_Error( S_COLOR_RED "default menu file not found: ui/hud.txt, unable to continue!\n" );
 		}
 	}
 
 	if ( len >= MAX_MENUDEFFILE ) {
-		trap_Error( va( S_COLOR_RED "menu file too large: %s is %i, max allowed is %i", menuFile, len, MAX_MENUDEFFILE ) );
 		trap_FS_FCloseFile( f );
+		trap_Error( va( S_COLOR_RED "menu file too large: %s is %i, max allowed is %i", menuFile, len, MAX_MENUDEFFILE ) );
 		return;
 	}
 
 	trap_FS_Read( buf, len, f );
-	buf[len] = 0;
+	buf[len] = '\0';
 	trap_FS_FCloseFile( f );
 
 	COM_Compress( buf );
@@ -2706,6 +2713,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum, qb
 	CG_ParseServerinfo();
 	CG_ParseSysteminfo();
 	CG_ParseWolfinfo();     // NERVE - SMF
+	CG_ParseServerToggles();
 
 	cgs.campaignInfoLoaded = qfalse;
 	if ( cgs.gametype == GT_WOLF_CAMPAIGN ) {
@@ -2796,7 +2804,7 @@ void CG_Init( int serverMessageNum, int serverCommandSequence, int clientNum, qb
 	CG_InitMarkPolys();
 
 	// remove the last loading update
-	cg.infoScreenText[0] = 0;
+	cg.infoScreenText[0] = '\0';
 
 	// Make sure we have update values (scores)
 	CG_SetConfigValues();

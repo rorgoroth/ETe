@@ -2007,7 +2007,7 @@ static void CG_DrawCrosshairNames( void ) {
 	}
 
 	// NERVE - SMF
-	if ( cg.crosshairClientNum > MAX_CLIENTS ) {
+	if ( cg.crosshairClientNum >= MAX_CLIENTS ) {
 		if ( !cg_drawCrosshairNames.integer ) {
 			return;
 		}
@@ -4202,13 +4202,13 @@ void CG_DrawDemoRecording( void ) {
 	if ( cg_demorecording.integer ) {
 		Com_sprintf( demostatus, sizeof( demostatus ), " demo %s: %ik ", cg_demofilename.string, cg_demooffset.integer / 1024 );
 	} else {
-		strncpy( demostatus, "", sizeof( demostatus ) );
+		demostatus[0] = '\0';
 	}
 
 	if ( cg_waverecording.integer ) {
 		Com_sprintf( wavestatus, sizeof( demostatus ), " audio %s: %ik ", cg_wavefilename.string, cg_waveoffset.integer / 1024 );
 	} else {
-		strncpy( wavestatus, "", sizeof( wavestatus ) );
+		demostatus[0] = '\0';
 	}
 
 	Com_sprintf( status, sizeof( status ), "RECORDING%s%s", demostatus, wavestatus );

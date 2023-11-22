@@ -305,7 +305,7 @@ void CG_ParseWolfinfo( void ) {
 	cgs.currentRound = atoi( Info_ValueForKey( info, "g_currentRound" ) );
 	cgs.nextTimeLimit = Q_atof( Info_ValueForKey( info, "g_nextTimeLimit" ) );
 	cgs.gamestate = atoi( Info_ValueForKey( info, "gamestate" ) );
-	cgs.currentCampaign = Info_ValueForKey( info, "g_currentCampaign" );
+	Q_strncpyz(	cgs.currentCampaign, Info_ValueForKey( info, "g_currentCampaign" ), sizeof( cgs.currentCampaign ) );
 	cgs.currentCampaignMap = atoi( Info_ValueForKey( info, "g_currentCampaignMap" ) );
 
 	// OSP - Announce game in progress if we are really playing
@@ -322,6 +322,16 @@ void CG_ParseWolfinfo( void ) {
 	if ( old_gs != GS_WARMUP_COUNTDOWN && cgs.gamestate == GS_WARMUP_COUNTDOWN ) {
 		CG_ParseWarmup();
 	}
+}
+
+void CG_ParseServerToggles( void ) {
+	const char *info;
+	int value;
+
+	info = CG_ConfigString( CS_SERVERTOGGLES );
+	value = atoi( info );
+
+	cgs.matchPaused = (value & CV_SVS_PAUSE) ? qtrue : qfalse;
 }
 
 /*
@@ -564,12 +574,12 @@ void CG_ShaderStateChanged( void ) {
 		n = strstr( o, "=" );
 		if ( n && *n ) {
 			strncpy( originalShader, o, n - o );
-			originalShader[n - o] = 0;
+			originalShader[n - o] = '\0';
 			n++;
 			t = strstr( n, ":" );
 			if ( t && *t ) {
 				strncpy( newShader, n, t - n );
-				newShader[t - n] = 0;
+				newShader[t - n] = '\0';
 			} else {
 				break;
 			}
@@ -577,7 +587,7 @@ void CG_ShaderStateChanged( void ) {
 			o = strstr( t, "@" );
 			if ( o ) {
 				strncpy( timeOffset, t, o - t );
-				timeOffset[o - t] = 0;
+				timeOffset[o - t] = '\0';
 				o++;
 				trap_R_RemapShader( cgs.gameShaderNames[atoi( originalShader )],
 									cgs.gameShaderNames[atoi( newShader )],
@@ -643,6 +653,8 @@ static void CG_ConfigStringModified( void ) {
 		CG_ParseWarmup();
 	} else if ( num == CS_WOLFINFO ) {      // NERVE - SMF
 		CG_ParseWolfinfo();
+	} else if ( num == CS_SERVERTOGGLES ) {
+		CG_ParseServerToggles();
 	} else if ( num == CS_FIRSTBLOOD ) {
 		cg.teamFirstBlood = atoi( str );
 	} else if ( num == CS_ROUNDSCORES1 ) {
@@ -920,7 +932,7 @@ static void CG_MapRestart( void ) {
 
 	// (SA) clear zoom (so no warpies)
 	cg.zoomedBinoc = qfalse;
-	cg.zoomedScope = qfalse;
+	cg.zoomedScope = 0;
 	cg.zoomTime = 0;
 	cg.zoomval = 0;
 
@@ -991,9 +1003,6 @@ static void CG_MapRestart( void ) {
 
 	cg.latchAutoActions = qfalse;
 	cg.latchVictorySound = qfalse;          // NERVE - SMF
-// JPW NERVE -- reset render flags
-	cg_fxflags = 0;
-// jpw
 
 	// we really should clear more parts of cg here and stop sounds
 	cg.v_dmg_time = 0;
@@ -1079,17 +1088,17 @@ int CG_ParseVoiceChats( const char *filename, voiceChatList_t *voiceChatList, in
 
 	len = trap_FS_FOpenFile( filename, &f, FS_READ );
 	if ( !f ) {
-		trap_Print( va( S_COLOR_RED "voice chat file not found: %s\n", filename ) );
+		CG_Printf( S_COLOR_RED "voice chat file not found: %s\n", filename );
 		return qfalse;
 	}
 	if ( len >= MAX_VOICEFILESIZE ) {
-		trap_Print( va( S_COLOR_RED "voice chat file too large: %s is %i, max allowed is %i", filename, len, MAX_VOICEFILESIZE ) );
+		CG_Printf( S_COLOR_RED "voice chat file too large: %s is %i, max allowed is %i\n", filename, len, MAX_VOICEFILESIZE );
 		trap_FS_FCloseFile( f );
 		return qfalse;
 	}
 
 	trap_FS_Read( buf, len, f );
-	buf[len] = 0;
+	buf[len] = '\0';
 	trap_FS_FCloseFile( f );
 
 	ptr = buf;
@@ -1098,7 +1107,7 @@ int CG_ParseVoiceChats( const char *filename, voiceChatList_t *voiceChatList, in
 	Com_sprintf( voiceChatList->name, sizeof( voiceChatList->name ), "%s", filename );
 	voiceChats = voiceChatList->voiceChats;
 	for ( i = 0; i < maxVoiceChats; i++ ) {
-		voiceChats[i].id[0] = 0;
+		voiceChats[i].id[0] = '\0';
 	}
 	token = COM_ParseExt( p, qtrue );
 	if ( !token || token[0] == 0 ) {
@@ -1111,7 +1120,7 @@ int CG_ParseVoiceChats( const char *filename, voiceChatList_t *voiceChatList, in
 	} else if ( !Q_stricmp( token, "neuter" ) )        {
 		voiceChatList->gender = GENDER_NEUTER;
 	} else {
-		trap_Print( va( S_COLOR_RED "expected gender not found in voice chat file: %s\n", filename ) );
+		CG_Printf( S_COLOR_RED "expected gender not found in voice chat file: %s\n", filename );
 		return qfalse;
 	}
 
@@ -1129,7 +1138,7 @@ int CG_ParseVoiceChats( const char *filename, voiceChatList_t *voiceChatList, in
 		Com_sprintf( voiceChats[voiceChatList->numVoiceChats].id, sizeof( voiceChats[voiceChatList->numVoiceChats].id ), "%s", token );
 		token = COM_ParseExt( p, qtrue );
 		if ( Q_stricmp( token, "{" ) ) {
-			trap_Print( va( S_COLOR_RED "expected { found %s in voice chat file: %s\n", token, filename ) );
+			CG_Printf( S_COLOR_RED "expected { found %s in voice chat file: %s\n", token, filename );
 			return qfalse;
 		}
 		voiceChats[voiceChatList->numVoiceChats].numSounds = 0;
@@ -1196,53 +1205,6 @@ void CG_LoadVoiceChats( void ) {
 
 	CG_Printf( "voice chat memory size = %d\n", size - trap_MemoryRemaining() );
 }
-
-/*
-=================
-CG_HeadModelVoiceChats
-=================
-*/
-/*int CG_HeadModelVoiceChats( char *filename ) {
-	int len, i;
-	fileHandle_t f;
-	char buf[MAX_VOICEFILESIZE];
-	char **p, *ptr;
-	char *token;
-
-	len = trap_FS_FOpenFile( filename, &f, FS_READ );
-	if ( !f ) {
-		trap_Print( va( "voice chat file not found: %s\n", filename ) );
-		return -1;
-	}
-	if ( len >= MAX_VOICEFILESIZE ) {
-		trap_Print( va( S_COLOR_RED "voice chat file too large: %s is %i, max allowed is %i", filename, len, MAX_VOICEFILESIZE ) );
-		trap_FS_FCloseFile( f );
-		return -1;
-	}
-
-	trap_FS_Read( buf, len, f );
-	buf[len] = 0;
-	trap_FS_FCloseFile( f );
-
-	ptr = buf;
-	p = &ptr;
-
-	token = COM_ParseExt( p, qtrue );
-	if ( !token || token[0] == 0 ) {
-		return -1;
-	}
-
-	for ( i = 0; i < MAX_VOICEFILES; i++ ) {
-		if ( !Q_stricmp( token, voiceChatLists[i].name ) ) {
-			return i;
-		}
-	}
-
-	//FIXME: maybe try to load the .voice file which name is stored in token?
-
-	return -1;
-}*/
-
 
 /*
 =================
@@ -1958,7 +1920,7 @@ void CG_scores_cmd( void ) {
 }
 
 static void CG_printFile( const char *str ) {
-	CG_Printf( str );
+	CG_Printf( "%s", str );
 	if ( cgs.dumpStatsFile > 0 ) {
 		char s[MAX_STRING_CHARS];
 

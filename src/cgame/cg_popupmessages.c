@@ -291,7 +291,7 @@ void CG_AddPMItem( popupMessageType_t type, const char* message, qhandle_t shade
 	// console deals with newlines perfectly.  We do chop off the newline
 	// at the end, if any, though.
 	if ( listItem->message[strlen( listItem->message ) - 1] == '\n' ) {
-		listItem->message[strlen( listItem->message ) - 1] = 0;
+		listItem->message[strlen( listItem->message ) - 1] = '\0';
 	}
 
 	trap_Print( va( "%s\n", listItem->message ) );

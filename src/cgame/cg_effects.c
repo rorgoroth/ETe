@@ -164,12 +164,6 @@ localEntity_t *CG_SmokePuff( const vec3_t p, const vec3_t vel,
 		re->shaderRGBA[2] = le->color[2] * 0xff;
 		re->shaderRGBA[3] = 0xff;
 	}
-// JPW NERVE
-	if ( cg_fxflags & 1 ) {
-		re->customShader = getTestShader();
-		re->rotation = 180;
-	}
-// jpw
 
 	re->reType = RT_SPRITE;
 	re->radius = le->radius;
@@ -210,18 +204,6 @@ void CG_SpawnEffect( vec3_t org ) {
 
 	VectorCopy( org, re->origin );
 	re->origin[2] -= 24;
-}
-
-qhandle_t getTestShader( void ) {
-	switch ( rand() % 2 ) {
-	case 0:
-		return cgs.media.nerveTestShader;
-		break;
-	case 1:
-	default:
-		return cgs.media.idTestShader;
-		break;
-	}
 }
 
 /*

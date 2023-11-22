@@ -1341,15 +1341,13 @@ static void CG_SpotlightEfx( centity_t *cent ) {
 	float dist, fov = 90;
 	vec4_t color = {1, 1, 1, .1};
 	int splinetarget = 0;
-	char    *cs;
-
 
 	VectorCopy( cent->currentState.origin2, targetpos );
 
 	splinetarget = cent->overheatTime;
 
 	if ( !splinetarget ) {
-		cs = (char *)CG_ConfigString( CS_SPLINES + cent->currentState.density );
+		const char *cs = CG_ConfigString( CS_SPLINES + cent->currentState.density );
 		cent->overheatTime = splinetarget = CG_LoadCamera( va( "cameras/%s.camera", cs ) );
 		if ( splinetarget != -1 ) {
 			trap_startCamera( splinetarget, cg.time );
@@ -1985,7 +1983,7 @@ static void CG_Prop( centity_t *cent ) {
 }
 
 typedef enum cabinetType_e {
-	CT_AMMO,
+	CT_AMMO = 0,
 	CT_HEALTH,
 	CT_MAX,
 } cabinetType_t;

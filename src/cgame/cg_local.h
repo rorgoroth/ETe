@@ -401,7 +401,7 @@ typedef struct markPoly_s {
 
 //----(SA)	moved in from cg_view.c
 typedef enum {
-	ZOOM_NONE,
+	ZOOM_NONE = 0,
 	ZOOM_BINOC,
 	ZOOM_SNIPER,
 	ZOOM_SNOOPER,
@@ -411,7 +411,7 @@ typedef enum {
 } EZoom_t;
 
 typedef enum {
-	ZOOM_OUT,   // widest angle
+	ZOOM_OUT = 0,   // widest angle
 	ZOOM_IN // tightest angle (approaching 0)
 } EZoomInOut_t;
 
@@ -420,7 +420,7 @@ extern float zoomTable[ZOOM_MAX_ZOOMS][2];
 //----(SA)	end
 
 typedef enum {
-	LE_MARK,
+	LE_MARK = 0,
 	LE_EXPLOSION,
 	LE_SPRITE_EXPLOSION,
 	LE_FRAGMENT,
@@ -447,12 +447,12 @@ typedef enum {
 } leFlag_t;
 
 typedef enum {
-	LEMT_NONE,
+	LEMT_NONE = 0,
 	LEMT_BLOOD
 } leMarkType_t;         // fragment local entities can leave marks on walls
 
 typedef enum {
-	LEBS_NONE,
+	LEBS_NONE = 0,
 	LEBS_BLOOD,
 	LEBS_ROCK,
 	LEBS_WOOD,
@@ -593,7 +593,7 @@ typedef struct clientInfo_s {
 } clientInfo_t;
 
 typedef enum {
-	W_PART_1,
+	W_PART_1 = 0,
 	W_PART_2,
 	W_PART_3,
 	W_PART_4,
@@ -604,7 +604,7 @@ typedef enum {
 } barrelType_t;
 
 typedef enum {
-	W_TP_MODEL,         //	third person model
+	W_TP_MODEL = 0,         //	third person model
 	W_FP_MODEL,         //	first person model
 	W_PU_MODEL,         //	pickup model
 	W_NUM_TYPES
@@ -761,7 +761,7 @@ typedef struct {
 // END		xkan, 8/29/2002
 
 typedef enum {
-	SHOW_OFF,
+	SHOW_OFF = 0,
 	SHOW_SHUTDOWN,
 	SHOW_ON
 } showView_t;
@@ -1282,8 +1282,6 @@ typedef struct {
 	qhandle_t binocShaderSimple;
 // JPW NERVE
 	qhandle_t fleshSmokePuffShader;   // JPW NERVE for bullet hit flesh smoke puffs
-	qhandle_t nerveTestShader;
-	qhandle_t idTestShader;
 	qhandle_t hud1Shader;
 	qhandle_t hud2Shader;
 	qhandle_t hud3Shader;
@@ -1887,7 +1885,7 @@ typedef struct {
 	float nextTimeLimit;
 	int minclients;
 	gamestate_t gamestate;
-	char        *currentCampaign;
+	char        currentCampaign[256];
 	int currentCampaignMap;
 
 	int complaintClient;        // DHM - Nerve
@@ -2021,6 +2019,8 @@ typedef struct {
 #ifdef ALLOW_GSYNC
 	qboolean		synchronousClients;
 #endif
+
+	qboolean		matchPaused;
 } cgs_t;
 
 //==============================================================================
@@ -2112,7 +2112,7 @@ extern vmCvar_t cg_deferPlayers;
 extern vmCvar_t cg_teamChatsOnly;
 extern vmCvar_t cg_noVoiceChats;                    // NERVE - SMF
 extern vmCvar_t cg_noVoiceText;                     // NERVE - SMF
-extern vmCvar_t cg_enableBreath;
+//extern vmCvar_t cg_enableBreath;
 extern vmCvar_t cg_autoactivate;
 extern vmCvar_t cg_smoothClients;
 
@@ -2239,6 +2239,7 @@ extern vmCvar_t cg_fovAdjust;
 const char *CG_ConfigString( int index );
 int CG_ConfigStringCopy( int index, char* buff, int buffsize );
 const char *CG_Argv( int arg );
+char *CG_ConcatArgs( int start );
 
 float CG_Cvar_Get( const char *cvar );
 
@@ -2248,8 +2249,8 @@ void CG_printConsoleString( const char *str );
 
 void CG_LoadObjectiveData( void );
 
-void QDECL CG_Printf( const char *msg, ... );
-void NORETURN QDECL CG_Error( const char *msg, ... );
+void QDECL CG_Printf( const char *msg, ... ) FORMAT_PRINTF(1, 2);
+void NORETURN QDECL CG_Error( const char *msg, ... ) FORMAT_PRINTF(1, 2);
 
 void CG_StartMusic( void );
 void CG_QueueMusic( void );
@@ -2351,7 +2352,6 @@ void CG_ReloadTranslation();
 //
 // cg_draw.c, cg_newDraw.c
 //
-extern char cg_fxflags;  // JPW NERVE
 
 void CG_InitStatsDebug( void );
 void CG_StatsDebugAddText( const char *text );
@@ -2731,7 +2731,7 @@ typedef struct {
 } playerInfo_t;
 
 typedef enum {
-	ANIM_IDLE,
+	ANIM_IDLE = 0,
 	ANIM_RAISE,
 } animType_t;
 
@@ -2762,6 +2762,7 @@ void CG_ExecuteNewServerCommands( int latestSequence );
 void CG_ParseServerinfo( void );
 void CG_ParseSysteminfo( void );
 void CG_ParseWolfinfo( void );          // NERVE - SMF
+void CG_ParseServerToggles( void );
 void CG_ParseSpawns( void );
 void CG_ParseServerVersionInfo( const char *pszVersionInfo );
 void CG_ParseReinforcementTimes( const char *pszReinfSeedString );
@@ -3026,7 +3027,6 @@ void trap_SendMoveSpeedsToGame( int entnum, char *movespeeds );
 void trap_UI_Popup( int arg0 );
 
 // NERVE - SMF
-qhandle_t getTestShader( void ); // JPW NERVE shhh
 void trap_UI_ClosePopup( const char *arg0 );
 void trap_Key_GetBindingBuf( int keynum, char *buf, int buflen );
 void trap_Key_SetBinding( int keynum, const char *binding );

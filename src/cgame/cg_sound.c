@@ -80,7 +80,6 @@ CG_SoundScriptPrecache
 int CG_SoundScriptPrecache( const char *name ) {
 	soundScriptSound_t *scriptSound;
 	long hash;
-	char *s;
 	soundScript_t   *sound;
 //	byte buf[1024];
 	int i;
@@ -91,9 +90,8 @@ int CG_SoundScriptPrecache( const char *name ) {
 
 	hash = generateHashValue( name );
 
-	s = (char *)name;
 	for ( sound = hashTable[hash]; sound; sound = sound->nextHash ) {
-		if ( !Q_stricmp( s, sound->name ) ) {
+		if ( !Q_stricmp( name, sound->name ) ) {
 			// found a match, precache these sounds
 			scriptSound = sound->soundList;
 			for ( ; scriptSound; scriptSound = scriptSound->next ) {
@@ -266,17 +264,17 @@ static void CG_SoundParseSounds( const char *filename, const char *buffer ) {
 		token = COM_ParseExt( text, qtrue );
 		if ( !*token ) {
 			if ( inSound ) {
-				CG_Error( "no concluding '}' in sound %s, file %s\n", sound.name, filename );
+				CG_Error( "no concluding '}' in sound %s, file %s", sound.name, filename );
 			}
 			return;
 		}
 
 		if ( !Q_stricmp( token, "{" ) ) {
 			if ( inSound ) {
-				CG_Error( "no concluding '}' in sound %s, file %s\n", sound.name, filename );
+				CG_Error( "no concluding '}' in sound %s, file %s", sound.name, filename );
 			}
 			if ( wantSoundName ) {
-				CG_Error( "'{' found but not expected, after %s, file %s\n", sound.name, filename );
+				CG_Error( "'{' found but not expected, after %s, file %s", sound.name, filename );
 			}
 			inSound = qtrue;
 
@@ -284,7 +282,7 @@ static void CG_SoundParseSounds( const char *filename, const char *buffer ) {
 			scriptSound = &soundScriptSounds[numSoundScriptSounds++];
 
 			if ( numSoundScripts == MAX_SOUND_SCRIPT_SOUNDS ) {
-				CG_Error( "MAX_SOUND_SCRIPT_SOUNDS exceeded.\nReduce number of sound scripts.\n" );
+				CG_Error( "MAX_SOUND_SCRIPT_SOUNDS exceeded.\nReduce number of sound scripts." );
 			}
 
 			scriptSound->lastPlayed = 0;
@@ -297,7 +295,7 @@ static void CG_SoundParseSounds( const char *filename, const char *buffer ) {
 
 		if ( !Q_stricmp( token, "}" ) ) {
 			if ( !inSound ) {
-				CG_Error( "'}' unexpected after sound %s, file %s\n", sound.name, filename );
+				CG_Error( "'}' unexpected after sound %s, file %s", sound.name, filename );
 			}
 
 			// end of a sound, copy it to the global list and stick it in the hashTable
@@ -321,7 +319,7 @@ static void CG_SoundParseSounds( const char *filename, const char *buffer ) {
 		if ( !inSound ) {
 			// this is the identifier for a new sound
 			if ( !wantSoundName ) {
-				CG_Error( "'%s' unexpected after sound %s, file %s\n", token, sound.name, filename );
+				CG_Error( "'%s' unexpected after sound %s, file %s", token, sound.name, filename );
 			}
 			memset( &sound, 0, sizeof( sound ) );
 			Q_strncpyz( sound.name, token, sizeof( sound.name ) );
@@ -377,11 +375,14 @@ static void CG_SoundParseSounds( const char *filename, const char *buffer ) {
 		if ( !Q_stricmp( token, "sound" ) ) {
 
 			if ( scriptSound->numsounds >= MAX_SOUNDSCRIPT_SOUNDS ) {
-				CG_Error( "Too many sounds for soundscript %s\n" );
+				CG_Error( "CG_SoundParseSounds(): Too many sounds for soundscript" );
 			}
 
 			token = COM_ParseExt( text, qtrue );
 
+			if ( !token[0] ) {
+				CG_Error( "CG_SoundParseSounds(): empty sound file name" );
+			}
 
 			Q_strncpyz( scriptSound->sounds[scriptSound->numsounds].filename, token, sizeof( scriptSound->sounds[0].filename ) );
 			scriptSound->numsounds++;
@@ -419,11 +420,11 @@ static void CG_SoundLoadSoundFiles( void ) {
 	}
 	if ( len > sizeof( bigTextBuffer ) ) {
 		trap_FS_FCloseFile( f );
-		CG_Error( "%s is too big, make it smaller (max = %i bytes)\n", filename, sizeof( bigTextBuffer ) );
+		CG_Error( "%s is too big, make it smaller (max = %u bytes)", filename, (unsigned)sizeof( bigTextBuffer ) );
 	}
 	// load the file into memory
 	trap_FS_Read( bigTextBuffer, len, f );
-	bigTextBuffer[len] = 0;
+	bigTextBuffer[len] = '\0';
 	trap_FS_FCloseFile( f );
 	// parse the list
 	text = bigTextBuffer;
@@ -457,10 +458,11 @@ static void CG_SoundLoadSoundFiles( void ) {
 			continue;
 		}
 		if ( len > sizeof( bigTextBuffer ) ) {
-			CG_Error( "%s is too big, make it smaller (max = %i bytes)\n", filename, sizeof( bigTextBuffer ) );
+			CG_Error( "%s is too big, make it smaller (max = %u bytes)", filename, (unsigned)sizeof( bigTextBuffer ) );
 		}
 		memset( bigTextBuffer, 0, sizeof( bigTextBuffer ) );
 		trap_FS_Read( bigTextBuffer, len, f );
+		bigTextBuffer[len] = '\0';
 		trap_FS_FCloseFile( f );
 		CG_SoundParseSounds( filename, bigTextBuffer );
 	}

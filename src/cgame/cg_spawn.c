@@ -243,21 +243,20 @@ void SP_trigger_objective_info( void ) {
 }
 
 typedef struct {
-	char    *name;
+	const char    *name;
 	void ( *spawn )( void );
 } spawn_t;
 
-spawn_t spawns[] = {
-	{0, 0},
+static const spawn_t spawns[] = {
 	{"path_corner_2",                SP_path_corner_2},
 	{"info_train_spline_main",       SP_info_train_spline_main},
 	{"info_train_spline_control",    SP_path_corner_2},
 
 	{"trigger_objective_info",       SP_trigger_objective_info},
 	{"misc_gamemodel",               SP_misc_gamemodel},
-};
 
-#define NUMSPAWNS   ( sizeof( spawns ) / sizeof( spawn_t ) )
+	{ NULL, NULL }
+};
 
 /*
 ===================
@@ -278,9 +277,10 @@ void CG_ParseEntityFromSpawnVars( void ) {
 	}
 
 	if ( CG_SpawnString( "classname", "", &classname ) ) {
-		for ( i = 0; i < NUMSPAWNS; i++ ) {
-			if ( !Q_stricmp( spawns[i].name, classname ) ) {
-				spawns[i].spawn();
+		const spawn_t *s;
+		for ( s = spawns ; s->name ; s++ ) {
+			if ( !Q_stricmp( s->name, classname ) ) {
+				s->spawn();
 				break;
 			}
 		}

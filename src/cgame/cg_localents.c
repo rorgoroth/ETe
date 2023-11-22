@@ -357,7 +357,7 @@ void CG_AddEmitter( localEntity_t *le ) {
 //----(SA)	end
 
 
-void CG_Explodef( vec3_t origin, vec3_t dir, int mass, int type, qhandle_t sound, int forceLowGrav, qhandle_t shader );
+void CG_Explodef( vec3_t origin, vec3_t dir, int mass, int type, sfxHandle_t sound, int forceLowGrav, qhandle_t shader );
 
 /*
 ================

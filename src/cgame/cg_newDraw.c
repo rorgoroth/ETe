@@ -106,7 +106,7 @@ int CG_TrimLeftPixels( char* instr, float scale, float w, int size ) {
 void CG_FitTextToWidth_Ext( char* instr, float scale, float w, int size, fontInfo_t* font ) {
 	char buffer[1024];
 	char    *s, *p, *c, *ls;
-	int l;
+	//int l;
 
 	Q_strncpyz( buffer, instr, 1024 );
 	memset( instr, 0, size );
@@ -114,10 +114,10 @@ void CG_FitTextToWidth_Ext( char* instr, float scale, float w, int size, fontInf
 	c = s = instr;
 	p = buffer;
 	ls = NULL;
-	l = 0;
+	//l = 0;
 	while ( *p ) {
 		*c = *p++;
-		l++;
+		//l++;
 
 		if ( *c == ' ' ) {
 			ls = c;
@@ -127,7 +127,7 @@ void CG_FitTextToWidth_Ext( char* instr, float scale, float w, int size, fontInf
 
 		if ( *p == '\n' ) {
 			s = c + 1;
-			l = 0;
+			//l = 0;
 		} else if ( CG_Text_Width_Ext( s, scale, 0, font ) > w ) {
 			if ( ls ) {
 				*ls = '\n';
@@ -139,7 +139,7 @@ void CG_FitTextToWidth_Ext( char* instr, float scale, float w, int size, fontInf
 			}
 
 			ls = NULL;
-			l = 0;
+			//l = 0;
 		}
 	}
 
@@ -153,7 +153,7 @@ void CG_FitTextToWidth_Ext( char* instr, float scale, float w, int size, fontInf
 void CG_FitTextToWidth2( char* instr, float scale, float w, int size ) {
 	char buffer[1024];
 	char    *s, *p, *c, *ls;
-	int l;
+	//int l;
 
 	Q_strncpyz( buffer, instr, 1024 );
 	memset( instr, 0, size );
@@ -161,10 +161,10 @@ void CG_FitTextToWidth2( char* instr, float scale, float w, int size ) {
 	c = s = instr;
 	p = buffer;
 	ls = NULL;
-	l = 0;
+	//l = 0;
 	while ( *p ) {
 		*c = *p++;
-		l++;
+		//l++;
 
 		if ( *c == ' ' ) {
 			ls = c;
@@ -174,7 +174,7 @@ void CG_FitTextToWidth2( char* instr, float scale, float w, int size ) {
 
 		if ( *p == '\n' ) {
 			s = c + 1;
-			l = 0;
+			//l = 0;
 		} else if ( CG_Text_Width( s, scale, 0 ) > w ) {
 			if ( ls ) {
 				*ls = '\n';
@@ -186,7 +186,7 @@ void CG_FitTextToWidth2( char* instr, float scale, float w, int size ) {
 			}
 
 			ls = NULL;
-			l = 0;
+			//l = 0;
 		}
 	}
 

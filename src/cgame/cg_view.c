@@ -449,7 +449,7 @@ void CG_KickAngles( void ) {
 
 	if ( Q_atof( buf ) != cg.recoilPitchAngle ) {
 		// encode the kick angles into a 24bit number, for sending to the client exe
-		trap_Cvar_Set( "cg_recoilPitch", va( "%f", cg.recoilPitchAngle ) );
+		trap_Cvar_Set( "cg_recoilPitch", va( "%g", cg.recoilPitchAngle ) );
 	}
 }
 
@@ -1081,7 +1081,6 @@ static void CG_DamageBlendBlob( void ) {
 	refEntity_t ent;
 	qboolean pointDamage;
 	viewDamage_t *vd;
-	float redFlash;
 
 	// Gordon: no damage blend blobs if in limbo or spectator, and in the limbo menu
 	if ( ( cg.snap->ps.pm_flags & PMF_LIMBO || cgs.clientinfo[cg.clientNum].team == TEAM_SPECTATOR ) && cg.showGameView ) {
@@ -1092,8 +1091,6 @@ static void CG_DamageBlendBlob( void ) {
 	if ( cgs.glconfig.hardwareType == GLHW_RAGEPRO ) {
 		return;
 	}
-
-	redFlash = 0;
 
 	for ( i = 0; i < MAX_VIEWDAMAGE; i++ ) {
 		vd = &cg.viewDamage[i];
@@ -1113,7 +1110,6 @@ static void CG_DamageBlendBlob( void ) {
 
 		// if not point Damage, only do flash blend
 		if ( !pointDamage ) {
-			redFlash += 10.0 * ( 1.0 - (float)t / maxTime );
 			continue;
 		}
 
@@ -1135,8 +1131,6 @@ static void CG_DamageBlendBlob( void ) {
 									( cg_bloodDamageBlend.value < 0.0f ) ? 0.0f : cg_bloodDamageBlend.value );
 
 		trap_R_AddRefEntityToScene( &ent );
-
-		redFlash += ent.radius;
 	}
 }
 
@@ -1376,10 +1370,10 @@ int CG_CalcViewValues( void ) {
 
 //=========================================================================
 
-const char* CG_MustParse( const char** pString, const char* pErrorMsg ) {
+static const char* CG_MustParse( const char** pString, const char* pErrorMsg ) {
 	const char* token = COM_Parse( pString );
 	if ( !*token ) {
-		CG_Error( pErrorMsg );
+		CG_Error( "%s", pErrorMsg );
 	}
 	return token;
 }
@@ -1396,16 +1390,16 @@ void CG_ParseSkyBox( void ) {
 		return;
 	}
 
-	token = CG_MustParse( &cstr, "CG_ParseSkyBox: error parsing skybox configstring\n" );
+	token = CG_MustParse( &cstr, "CG_ParseSkyBox: error parsing skybox configstring" );
 	cg.skyboxViewOrg[0] = Q_atof( token );
 
-	token = CG_MustParse( &cstr, "CG_ParseSkyBox: error parsing skybox configstring\n" );
+	token = CG_MustParse( &cstr, "CG_ParseSkyBox: error parsing skybox configstring" );
 	cg.skyboxViewOrg[1] = Q_atof( token );
 
-	token = CG_MustParse( &cstr, "CG_ParseSkyBox: error parsing skybox configstring\n" );
+	token = CG_MustParse( &cstr, "CG_ParseSkyBox: error parsing skybox configstring" );
 	cg.skyboxViewOrg[2] = Q_atof( token );
 
-	token = CG_MustParse( &cstr, "CG_ParseSkyBox: error parsing skybox configstring\n" );
+	token = CG_MustParse( &cstr, "CG_ParseSkyBox: error parsing skybox configstring" );
 	cg.skyboxViewFov = atoi( token );
 
 	if ( !cg.skyboxViewFov ) {
@@ -1413,15 +1407,15 @@ void CG_ParseSkyBox( void ) {
 	}
 
 	// setup fog the first time, ignore this part of the configstring after that
-	token = CG_MustParse( &cstr, "CG_ParseSkyBox: error parsing skybox configstring.  No fog state\n" );
+	token = CG_MustParse( &cstr, "CG_ParseSkyBox: error parsing skybox configstring.  No fog state" );
 	if ( atoi( token ) ) {   // this camera has fog
-		token = CG_MustParse( &cstr, "CG_DrawSkyBoxPortal: error parsing skybox configstring.  No fog[0]\n" );
+		token = CG_MustParse( &cstr, "CG_DrawSkyBoxPortal: error parsing skybox configstring.  No fog[0]" );
 		fogColor[0] = Q_atof( token );
 
-		token = CG_MustParse( &cstr, "CG_DrawSkyBoxPortal: error parsing skybox configstring.  No fog[1]\n" );
+		token = CG_MustParse( &cstr, "CG_DrawSkyBoxPortal: error parsing skybox configstring.  No fog[1]" );
 		fogColor[1] = Q_atof( token );
 
-		token = CG_MustParse( &cstr, "CG_DrawSkyBoxPortal: error parsing skybox configstring.  No fog[2]\n" );
+		token = CG_MustParse( &cstr, "CG_DrawSkyBoxPortal: error parsing skybox configstring.  No fog[2]" );
 		fogColor[2] = Q_atof( token );
 
 		token = COM_ParseExt( &cstr, qfalse );
@@ -1460,21 +1454,21 @@ void CG_ParseTagConnect( int tagNum ) {
 		return;
 	}
 
-	token = CG_MustParse( &pString, "Invalid TAGCONNECT configstring\n" );
+	token = CG_MustParse( &pString, "Invalid TAGCONNECT configstring" );
 
 	entNum = atoi( token );
 	if ( entNum < 0 || entNum >= MAX_GENTITIES ) {
-		CG_Error( "Invalid TAGCONNECT entitynum\n" );
+		CG_Error( "Invalid TAGCONNECT entitynum" );
 	}
 
-	token = CG_MustParse( &pString, "Invalid TAGCONNECT configstring\n" );
+	token = CG_MustParse( &pString, "Invalid TAGCONNECT configstring" );
 
 	cg_entities[entNum].tagParent = atoi( token );
 	if ( cg_entities[entNum].tagParent < 0 || cg_entities[entNum].tagParent >= MAX_GENTITIES ) {
-		CG_Error( "Invalid TAGCONNECT tagparent\n" );
+		CG_Error( "Invalid TAGCONNECT tagparent" );
 	}
 
-	token = CG_MustParse( &pString, "Invalid TAGCONNECT configstring\n" );
+	token = CG_MustParse( &pString, "Invalid TAGCONNECT configstring" );
 	Q_strncpyz( cg_entities[entNum].tagName, token, MAX_QPATH );
 }
 

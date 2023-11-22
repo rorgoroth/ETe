@@ -36,7 +36,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "cg_local.h"
 
-void CG_TargetCommand_f( void ) {
+static void CG_TargetCommand_f( void ) {
 	int targetNum;
 	char test[4];
 
@@ -105,7 +105,7 @@ static void CG_StatsUp_f( void ) {
 	}
 }
 
-void CG_topshotsDown_f( void ) {
+static void CG_topshotsDown_f( void ) {
 	if ( !cg.demoPlayback ) {
 		if ( cgs.topshots.show == SHOW_SHUTDOWN && cg.time < cgs.topshots.fadeTime ) {
 			cgs.topshots.fadeTime = 2 * cg.time + STATS_FADE_TIME - cgs.topshots.fadeTime;
@@ -122,7 +122,7 @@ void CG_topshotsDown_f( void ) {
 	}
 }
 
-void CG_topshotsUp_f( void ) {
+static void CG_topshotsUp_f( void ) {
 	if ( cgs.topshots.show == SHOW_ON ) {
 		cgs.topshots.show = SHOW_SHUTDOWN;
 		if ( cg.time < cgs.topshots.fadeTime ) {
@@ -166,12 +166,6 @@ void CG_ScoresUp_f( void ) {
 	}
 }
 
-static void CG_LoadHud_f( void ) {
-//	String_Init();
-//	Menu_Reset();
-//	CG_LoadMenus("ui/hud.txt");
-}
-
 static void CG_LoadWeapons_f( void ) {
 	int i;
 
@@ -183,44 +177,29 @@ static void CG_LoadWeapons_f( void ) {
 	}
 }
 
-/*
-static void CG_InventoryDown_f( void ) {
-	cg.showItems = qtrue;
-}
-
-static void CG_InventoryUp_f( void ) {
-	cg.showItems = qfalse;
-	cg.itemFadeTime = cg.time;
-}
-*/
-
 static void CG_TellTarget_f( void ) {
 	int clientNum;
-	char command[128];
-	char message[128];
+	char command[MAX_SAY_TEXT];
 
 	clientNum = CG_CrosshairPlayer();
 	if ( clientNum == -1 ) {
 		return;
 	}
 
-	trap_Args( message, 128 );
-	Com_sprintf( command, 128, "tell %i %s", clientNum, message );
+	Com_sprintf( command, sizeof(command), "tell %i %s", clientNum, CG_ConcatArgs(1) );
 	trap_SendClientCommand( command );
 }
 
 static void CG_TellAttacker_f( void ) {
 	int clientNum;
-	char command[128];
-	char message[128];
+	char command[MAX_SAY_TEXT];
 
 	clientNum = CG_LastAttacker();
 	if ( clientNum == -1 ) {
 		return;
 	}
 
-	trap_Args( message, 128 );
-	Com_sprintf( command, 128, "tell %i %s", clientNum, message );
+	Com_sprintf( command, 128, "tell %i %s", clientNum, CG_ConcatArgs(1) );
 	trap_SendClientCommand( command );
 }
 
@@ -274,7 +253,7 @@ void CG_StartCamera( const char *name, qboolean startBlack ) {
 	//	return;
 
 	COM_StripExtension( name, lname, sizeof( lname ) );    //----(SA)	added
-	strcat( lname, ".camera" );
+	Q_strcat( lname, sizeof(lname), ".camera" );
 
 	if ( trap_loadCamera( CAM_PRIMARY, va( "cameras/%s", lname ) ) ) {
 		cg.cameraMode = qtrue;                  // camera on in cgame
@@ -291,7 +270,7 @@ void CG_StartCamera( const char *name, qboolean startBlack ) {
 		trap_stopCamera( CAM_PRIMARY );           // camera off in client
 		CG_Fade( 0, 0, 0, 0, cg.time, 0 );        // ensure fadeup
 		trap_Cvar_Set( "cg_letterbox", "0" );
-		CG_Printf( "Unable to load camera %s\n",lname );
+		CG_Printf( "Unable to load camera %s\n", lname );
 	}
 }
 
@@ -307,7 +286,7 @@ void CG_StartInitialCamera() {
 		CG_StartCamera( g_initialCamera, g_initialCameraStartBlack );
 
 		// Clear it now so we don't get re-entrance problems
-		g_initialCamera[0] = 0;
+		g_initialCamera[0] = '\0';
 		g_initialCameraStartBlack = qfalse;
 
 	} // if (g_initialCamera[0] != 0)...
@@ -376,7 +355,7 @@ void CG_QuickFireteamMessage_f( void ) {
 	}
 }
 
-void CG_QuickFireteamAdmin_f( void ) {
+static void CG_QuickFireteamAdmin_f( void ) {
 	trap_UI_Popup( UIMENU_NONE );
 
 	if ( cg.showFireteamMenu ) {
@@ -424,7 +403,7 @@ static void CG_FTSayPlayerClass_f( void ) {
 
 	if ( cg.snap && ( cg.snap->ps.pm_type != PM_INTERMISSION ) ) {
 		if ( cgs.clientinfo[cg.clientNum].team == TEAM_SPECTATOR || cgs.clientinfo[cg.clientNum].team == TEAM_FREE ) {
-			CG_Printf( CG_TranslateString( "Can't team voice chat as a spectator.\n" ) );
+			CG_Printf( "%s", CG_TranslateString( "Can't team voice chat as a spectator.\n" ) );
 			return;
 		}
 	}
@@ -452,7 +431,7 @@ static void CG_SayPlayerClass_f( void ) {
 
 	if ( cg.snap && ( cg.snap->ps.pm_type != PM_INTERMISSION ) ) {
 		if ( cgs.clientinfo[cg.clientNum].team == TEAM_SPECTATOR || cgs.clientinfo[cg.clientNum].team == TEAM_FREE ) {
-			CG_Printf( CG_TranslateString( "Can't team voice chat as a spectator.\n" ) );
+			CG_Printf( "%s", CG_TranslateString( "Can't team voice chat as a spectator.\n" ) );
 			return;
 		}
 	}
@@ -471,7 +450,7 @@ static void CG_VoiceChat_f( void ) {
 	// NOTE - This cg.snap will be the person you are following, but its just for intermission test
 	if ( cg.snap && ( cg.snap->ps.pm_type != PM_INTERMISSION ) ) {
 		if ( cgs.clientinfo[cg.clientNum].team == TEAM_SPECTATOR || cgs.clientinfo[cg.clientNum].team == TEAM_FREE ) {
-			CG_Printf( CG_TranslateString( "Can't voice chat as a spectator.\n" ) );
+			CG_Printf( "%s", CG_TranslateString( "Can't voice chat as a spectator.\n" ) );
 			return;
 		}
 	}
@@ -492,7 +471,7 @@ static void CG_TeamVoiceChat_f( void ) {
 	// NOTE - This cg.snap will be the person you are following, but its just for intermission test
 	if ( cg.snap && ( cg.snap->ps.pm_type != PM_INTERMISSION ) ) {
 		if ( cgs.clientinfo[cg.clientNum].team == TEAM_SPECTATOR || cgs.clientinfo[cg.clientNum].team == TEAM_FREE ) {
-			CG_Printf( CG_TranslateString( "Can't team voice chat as a spectator.\n" ) );
+			CG_Printf( "%s", CG_TranslateString( "Can't team voice chat as a spectator.\n" ) );
 			return;
 		}
 	}
@@ -513,7 +492,7 @@ static void CG_BuddyVoiceChat_f( void ) {
 	// NOTE - This cg.snap will be the person you are following, but its just for intermission test
 	if ( cg.snap && ( cg.snap->ps.pm_type != PM_INTERMISSION ) ) {
 		if ( cgs.clientinfo[cg.clientNum].team == TEAM_SPECTATOR || cgs.clientinfo[cg.clientNum].team == TEAM_FREE ) {
-			CG_Printf( CG_TranslateString( "Can't buddy voice chat as a spectator.\n" ) );
+			CG_Printf( "%s", CG_TranslateString( "Can't buddy voice chat as a spectator.\n" ) );
 			return;
 		}
 	}
@@ -709,7 +688,7 @@ const char *aMonths[12] = {
 	"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 };
 
-void CG_currentTime_f( void ) {
+static void CG_currentTime_f( void ) {
 	qtime_t ct;
 
 	trap_RealTime( &ct );
@@ -726,14 +705,14 @@ void CG_autoScreenShot_f( void ) {
 	trap_SendConsoleCommand( va( "screenshot%s %s\n", ( ( cg_useScreenshotJPEG.integer ) ? "JPEG" : "" ), CG_generateFilename() ) );
 }
 
-void CG_vstrDown_f( void ) {
+static void CG_vstrDown_f( void ) {
 	// The engine also passes back the key code and time of the key press
 	if ( trap_Argc() == 5 ) {
 		trap_SendConsoleCommand( va( "vstr %s;", CG_Argv( 1 ) ) );
 	} else { CG_Printf( "[cgnotify]Usage: +vstr [down_vstr] [up_vstr]\n" );}
 }
 
-void CG_vstrUp_f( void ) {
+static void CG_vstrUp_f( void ) {
 	// The engine also passes back the key code and time of the key press
 	if ( trap_Argc() == 5 ) {
 		trap_SendConsoleCommand( va( "vstr %s;", CG_Argv( 2 ) ) );
@@ -766,29 +745,9 @@ void CG_dumpStats_f( void ) {
 		trap_SendClientCommand( ( cg.mvTotalClients < 1 ) ? "weaponstats" : "statsall" );
 	}
 }
-void CG_wStatsDown_f( void ) {
-	int i = ( cg.mvTotalClients > 0 ) ? ( cg.mvCurrentActive->mvInfo & MV_PID ) : cg.snap->ps.clientNum;
 
-	if ( cg.mvTotalClients < 1 && cg.snap->ps.persistant[PERS_TEAM] == TEAM_SPECTATOR ) {
-		Pri( "You must be a player or following a player to use +wstats\n" );
-		return;
-	}
-
-	if ( cg.statsRequestTime < cg.time ) {
-		cg.statsRequestTime = cg.time + 500;
-		trap_SendClientCommand( va( "wstats %d", i ) );
-	}
-
-	cg.showStats = qtrue;
-}
-
-void CG_wStatsUp_f( void ) {
-	cg.showStats = qfalse;
-	CG_windowFree( cg.statsWindow );
-	cg.statsWindow = NULL;
-}
-
-void CG_toggleSpecHelp_f( void ) {
+#ifdef MV_SUPPORT
+static void CG_toggleSpecHelp_f( void ) {
 	if ( cg.mvTotalClients > 0 && !cg.demoPlayback ) {
 		if ( cg.spechelpWindow != SHOW_ON && cg_specHelp.integer > 0 ) {
 			CG_ShowHelp_On( &cg.spechelpWindow );
@@ -797,11 +756,8 @@ void CG_toggleSpecHelp_f( void ) {
 		}
 	}
 }
+#endif
 // -OSP
-
-void CG_Obj_f( void ) {
-	// Gordon: short circuit this
-}
 
 static void CG_EditSpeakers_f( void ) {
 	if ( cg.editingSpeakers ) {
@@ -945,8 +901,6 @@ typedef struct {
 
 static consoleCommand_t commands[] =
 {
-//	{ "obj", CG_Obj_f },
-//	{ "setspawnpt", CG_Obj_f },
 	{ "testgun", CG_TestGun_f },
 	{ "testmodel", CG_TestModel_f },
 	{ "nextframe", CG_TestModelNextFrame_f },
@@ -969,8 +923,7 @@ static consoleCommand_t commands[] =
 	{ "tell_target", CG_TellTarget_f },
 	{ "tell_attacker", CG_TellAttacker_f },
 	{ "tcmd", CG_TargetCommand_f },
-	{ "fade", CG_Fade_f },   // duffy
-	{ "loadhud", CG_LoadHud_f },
+	{ "fade", CG_Fade_f },
 	{ "loadweapons", CG_LoadWeapons_f },
 
 	{ "mp_QuickMessage", CG_QuickMessage_f },
@@ -978,8 +931,6 @@ static consoleCommand_t commands[] =
 	{ "mp_fireteamadmin",    CG_QuickFireteamAdmin_f },
 	{ "wm_sayPlayerClass",   CG_SayPlayerClass_f },
 	{ "wm_ftsayPlayerClass",CG_FTSayPlayerClass_f },
-
-
 	{ "VoiceChat",       CG_VoiceChat_f },
 	{ "VoiceTeamChat",   CG_TeamVoiceChat_f },
 
@@ -1038,7 +989,7 @@ static consoleCommand_t commands[] =
 	{ "modifySpeaker", CG_ModifySpeaker_f },
 	{ "undoSpeaker", CG_UndoSpeaker_f },
 	{ "cpm", CG_CPM_f },
-	{ "forcetapout", CG_ForceTapOut_f },
+	{ "forcetapout", CG_ForceTapOut_f }
 };
 
 static const size_t numCommands = ARRAY_LEN( commands );
@@ -1080,6 +1031,7 @@ static const char *gcmds[] =
 	//"addtt",
 	"addip",
 	"ban",
+	"bot",
 	"bottomshots",
 	//"buddylist",
 	"callvote",
@@ -1101,8 +1053,9 @@ static const char *gcmds[] =
 	"godother",
 	"ignore",
 	"kick",
+	"kickall",
+	"kickbots",
 	"kill",
-	//"listbotgoals",
 	"listcampaigns",
 	"listip",
 	"listmaxlivesip",

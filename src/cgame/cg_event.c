@@ -42,10 +42,10 @@ CG_Obituary
 static void CG_Obituary( entityState_t *ent ) {
 	int mod;
 	int target, attacker;
-	char        *message;
-	char        *message2;
-	char targetName[32];
-	char attackerName[32];
+	const char  *message;
+	const char  *message2;
+	char targetName[MAX_NAME_LENGTH];
+	char attackerName[MAX_NAME_LENGTH];
 	clientInfo_t    *ci, *ca; // JPW NERVE ca = attacker
 	qhandle_t deathShader = cgs.media.pmImages[PM_DEATH];
 
@@ -414,7 +414,7 @@ static void CG_Obituary( entityState_t *ent ) {
 //==========================================================================
 
 // from cg_weapons.c
-extern int CG_WeaponIndex( int weapnum, int *bank, int *cycle );
+int CG_WeaponIndex( int weapnum, int *bank, int *cycle );
 
 
 /*
@@ -505,7 +505,7 @@ Also called by playerstate transition
 ================
 */
 void CG_PainEvent( centity_t *cent, int health, qboolean crouching ) {
-	char    *snd;
+	const char *snd;
 
 	// don't do more than two pain sounds a second
 	if ( cg.time - cent->pe.painTime < 500 ) {
@@ -576,8 +576,8 @@ void CG_PrecacheFXSounds( void ) {
 	}
 }
 
-void CG_Explodef( vec3_t origin, vec3_t dir, int mass, int type, qhandle_t sound, int forceLowGrav, qhandle_t shader );
-void CG_RubbleFx( vec3_t origin, vec3_t dir, int mass, int type, qhandle_t sound, int forceLowGrav, qhandle_t shader, float speedscale, float sizescale );
+void CG_Explodef( vec3_t origin, vec3_t dir, int mass, int type, sfxHandle_t sound, int forceLowGrav, qhandle_t shader );
+void CG_RubbleFx( vec3_t origin, vec3_t dir, int mass, int type, sfxHandle_t sound, int forceLowGrav, qhandle_t shader, float speedscale, float sizescale );
 
 /*
 ==============
@@ -1001,7 +1001,7 @@ CG_Explodef
 	made this more generic for spawning hits and breaks without needing a *cent
 ==============
 */
-void CG_Explodef( vec3_t origin, vec3_t dir, int mass, int type, qhandle_t sound, int forceLowGrav, qhandle_t shader ) {
+void CG_Explodef( vec3_t origin, vec3_t dir, int mass, int type, sfxHandle_t sound, int forceLowGrav, qhandle_t shader ) {
 	int i;
 	localEntity_t   *le;
 	refEntity_t     *re;
@@ -2545,7 +2545,7 @@ void CG_EntityEvent( centity_t *cent, vec3_t position ) {
 		break;
 
 	case EV_FLAMETHROWER_EFFECT:
-		CG_FireFlameChunks( cent, cent->currentState.origin, cent->currentState.apos.trBase, 0.6, 2 );
+		CG_FireFlameChunks( cent, cent->currentState.origin, cent->currentState.apos.trBase, 0.6, qtrue );
 		break;
 
 	case EV_DUST:
