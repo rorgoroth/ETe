@@ -324,8 +324,8 @@ void CG_ReflectVelocity( localEntity_t *le, trace_t *trace ) {
 		//	le->pos.trType = TR_STATIONARY;
 	} else if ( trace->allsolid || ( trace->plane.normal[2] > 0 && ( le->pos.trDelta[2] < 40 || le->pos.trDelta[2] < -cg.frametime * le->pos.trDelta[2] ) ) ) {
 //----(SA)	if it's a fragment and it's not resting on the world...
-//			if(le->leType == LE_DEBRIS && trace->entityNum < (MAX_ENTITIES - 1))
-		if ( le->leType == LE_FRAGMENT && trace->entityNum < ( MAX_ENTITIES - 1 ) ) {
+//			if(le->leType == LE_DEBRIS && trace->entityNum < (ENTITYNUM_WORLD))
+		if ( le->leType == LE_FRAGMENT && trace->entityNum < ( ENTITYNUM_WORLD ) ) {
 			le->pos.trType = TR_GRAVITY_PAUSED;
 		} else {
 			le->pos.trType = TR_STATIONARY;
