@@ -4280,7 +4280,7 @@ static int FS_GetModList( char *listbuf, int bufsize ) {
 		if ( Sys_IsHiddenFolder( name ) ) {
 			continue;
 		}
-#ifndef id386
+#if !id386
 		// drop etpro because compatibility
 		if ( !Q_stricmp( name, "etpro" ) ) {
 			continue;
