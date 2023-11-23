@@ -4066,8 +4066,16 @@ static void CL_Video_f( void )
 
 	if ( Cmd_Argc() == 2 )
 	{
+		const char *arg = Cmd_Argv( 1 );
 		// explicit filename
-		Com_sprintf( filename, sizeof( filename ), "videos/%s", Cmd_Argv( 1 ) );
+		if ( !Q_stricmp( arg, "$demo") ) {
+			char demoName[ MAX_OSPATH ];
+			COM_StripExtension( clc.demoName, demoName, sizeof( clc.demoName ) );
+			Com_sprintf( filename, sizeof( filename ), "videos/%s", demoName );
+		}
+		else {
+			Com_sprintf( filename, sizeof( filename ), "videos/%s", arg );
+		}
 
 		// override video file extension
 		if ( pipe )
