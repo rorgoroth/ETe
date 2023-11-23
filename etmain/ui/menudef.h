@@ -26,6 +26,9 @@ If you have questions concerning this license or the applicable additional terms
 ===========================================================================
 */
 
+#ifndef __UI_MENUDEF_H__
+#define __UI_MENUDEF_H__
+
 #define ITEM_TYPE_TEXT              0       // simple text
 #define ITEM_TYPE_BUTTON            1       // button, basically text with a border
 #define ITEM_TYPE_RADIOBUTTON       2       // toggle button, may be grouped
@@ -471,3 +474,5 @@ If you have questions concerning this license or the applicable additional terms
 #define RL_REFEREE              1
 #define RL_RCON                 2
 // -OSP
+
+#endif
