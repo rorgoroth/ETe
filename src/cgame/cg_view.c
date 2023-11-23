@@ -1883,6 +1883,14 @@ void CG_DrawActiveFrame( int serverTime, stereoFrame_t stereoView, qboolean demo
 		// decide on third person view
 		cg.renderingThirdPerson = cg_thirdPerson.integer || ( cg.snap->ps.stats[STAT_HEALTH] <= 0 ) || cg.showGameView;
 
+		if ( cg.zoomedBinoc || cg.zoomedScope > 0 ) {
+			cg.renderingThirdPerson = qfalse;
+		}
+		// No third person mounted gun (mounted tank gun is fine, as rendering looks okay)
+		else if ( cg.snap->ps.eFlags & EF_MG42_ACTIVE || cg.snap->ps.eFlags & EF_AAGUN_ACTIVE ) {
+			cg.renderingThirdPerson = qfalse;
+		}
+
 		// build cg.refdef
 		inwater = CG_CalcViewValues();
 		CG_SetupFrustum();
