@@ -67,35 +67,37 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Build Engine
-      working-directory: ${{github.workspace}}/src
+    - name: Build
       run: |
-        msbuild win32\msvc2017\ete-ded.vcxproj -m -p:TargetName=ETe.ded,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
-        msbuild win32\msvc2017\renderer.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
-        msbuild win32\msvc2017\ete.vcxproj -m -p:TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0
+        mkdir bin
 
-    - name: Build etmain
-      working-directory: ${{github.workspace}}/src
-      run: |
-        msbuild win32\msvc2017\game.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
-        msbuild win32\msvc2017\ui.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
-        msbuild win32\msvc2017\cgame.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
+        msbuild src\win32\msvc2017\ete-ded.vcxproj -m -p:TargetName=ETe.ded,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
+        copy src\win32\msvc2017\output\${{ matrix.config }}\ETe.ded.exe bin\ETe.ded${{ matrix.suffix }}.exe
+        msbuild src\win32\msvc2017\ete-ded.vcxproj -m -p:TargetName=ETe.ded,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
 
-    - name: Create Binary Directory
-      working-directory: ${{github.workspace}}
-      run: mkdir bin
+        msbuild src\win32\msvc2017\renderer.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
+        msbuild src\win32\msvc2017\ete.vcxproj -m -p:TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0
+        copy src\win32\msvc2017\output\${{ matrix.config }}\ETe.exe bin\ETe${{ matrix.suffix }}.exe
+        msbuild src\win32\msvc2017\renderer.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
+        msbuild src\win32\msvc2017\ete.vcxproj -m -p:TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 -t:Clean
 
-    - name: Copy outputs to Binary Directory
-      working-directory: ${{github.workspace}}/src
-      run: |
-          copy win32\msvc2017\output\${{ matrix.config }}\ETe.ded.exe ${{github.workspace}}\bin\ETe.ded${{ matrix.suffix }}.exe
-          copy win32\msvc2017\output\${{ matrix.config }}\ETe.exe ${{github.workspace}}\bin\ETe${{ matrix.suffix }}.exe
+        msbuild src\win32\msvc2017\renderervk.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
+        msbuild src\win32\msvc2017\ete.vcxproj -m -p:TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0
+        copy src\win32\msvc2017\output\${{ matrix.config }}\ETe.exe bin\ETe-vulkan${{ matrix.suffix }}.exe
+        msbuild src\win32\msvc2017\renderer.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
+        msbuild src\win32\msvc2017\ete.vcxproj -m -p:TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 -t:Clean
 
-          copy win32\msvc2017\output\${{ matrix.config }}\qagame_mp_${{ matrix.pkg_suffix }}.dll ${{github.workspace}}\bin\
-          copy win32\msvc2017\output\${{ matrix.config }}\ui_mp_${{ matrix.pkg_suffix }}.dll ${{github.workspace}}\bin\
-          copy win32\msvc2017\output\${{ matrix.config }}\cgame_mp_${{ matrix.pkg_suffix }}.dll ${{github.workspace}}\bin\
+        msbuild src\win32\msvc2017\game.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
+        msbuild src\win32\msvc2017\ui.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
+        msbuild src\win32\msvc2017\cgame.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
 
-#copy win32\msvc2017\output\${{ matrix.config }}\ete-steamlaunch.exe ${{github.workspace}}\bin\ete-steamlaunch${{ matrix.suffix }}.exe
+        copy src\win32\msvc2017\output\${{ matrix.config }}\qagame_mp_${{ matrix.pkg_suffix }}.dll bin\
+        copy src\win32\msvc2017\output\${{ matrix.config }}\ui_mp_${{ matrix.pkg_suffix }}.dll bin\
+        copy src\win32\msvc2017\output\${{ matrix.config }}\cgame_mp_${{ matrix.pkg_suffix }}.dll bin\
+
+        msbuild src\win32\msvc2017\game.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
+        msbuild src\win32\msvc2017\ui.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
+        msbuild src\win32\msvc2017\cgame.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
 
     - uses: actions/upload-artifact@v3
       if: ${{ matrix.config == 'Release' }}
@@ -283,19 +285,19 @@ jobs:
         run: |
           md5sum ./linux-x86/ete.x86 > ete.x86.md5
           sha1sum ./linux-x86/ete.x86 > ete.x86.sha1
-          7z a -r ete-client-hashes.zip ete.x86.md5 ete.x86.sha1
           md5sum ./linux-x86_64/ete.x86_64 > ete.x86_64.md5
           sha1sum ./linux-x86_64/ete.x86_64 > ete.x86_64.sha1
-          7z a -r ete-client-hashes.zip ete.x86_64.md5 ete.x86_64.sha1
           md5sum ./windows-x86/ETe.exe > ETe.exe.md5
           sha1sum ./windows-x86/ETe.exe > ETe.exe.sha1
-          7z a -r ete-client-hashes.zip ETe.exe.md5 ETe.exe.sha1
           md5sum ./windows-x64/ETe.x64.exe > ETe.x64.exe.md5
           sha1sum ./windows-x64/ETe.x64.exe > ETe.x64.exe.sha1
-          7z a -r ete-client-hashes.zip ETe.x64.exe.md5 ETe.x64.exe.sha1
+          md5sum ./windows-x86/ETe-vulkan.exe > ETe-vulkan.exe.md5
+          sha1sum ./windows-x86/ETe-vulkan.exe > ETe-vulkan.exe.sha1
+          md5sum ./windows-x64/ETe-vulkan.x64.exe > ETe-vulkan.x64.exe.md5
+          sha1sum ./windows-x64/ETe-vulkan.x64.exe > ETe-vulkan.x64.exe.sha1
           md5sum ./macos-x86_64/ete.x86_64 > ete_mac.x86_64.md5
           sha1sum ./macos-x86_64/ete.x86_64 > ete_mac.x86_64.sha1
-          7z a -r ete-client-hashes.zip ete_mac.x86_64.md5 ete_mac.x86_64.sha1
+          7z a -r ete-client-hashes.zip *.md5 *.sha1
 
 #TODO other builds
 #NOTE purposely skipping etmain for macos as it is not really functional
