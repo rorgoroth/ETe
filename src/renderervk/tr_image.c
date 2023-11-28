@@ -210,7 +210,15 @@ R_ImageList_f
 void R_ImageList_f( void ) {
 	const image_t *image;
 	int i, estTotalSize = 0;
-	char *name, buf[MAX_QPATH*2 + 5];
+	char *name, buf[MAX_QPATH*2 + 7];
+	const char *match;
+	int matchCount = 0;
+
+	if ( ri.Cmd_Argc() > 1 ) {
+		match = ri.Cmd_Argv( 1 );
+	} else {
+		match = NULL;
+	}
 
 	ri.Printf( PRINT_ALL, "\n -n- --w-- --h-- type  -size- --name-------\n" );
 
@@ -222,6 +230,16 @@ void R_ImageList_f( void ) {
 		int displaySize;
 
 		image = tr.images[ i ];
+
+		if ( match && !ri.Com_Filter( match, image->imgName ) ) {
+			if ( Q_stricmp( image->imgName, image->imgName2 ) == 0 ) {
+				continue;
+			}
+			else if ( !ri.Com_Filter( match, image->imgName2 ) ) {
+				continue;
+			}
+		}
+
 		estSize = image->uploadHeight * image->uploadWidth;
 
 		switch ( image->internalFormat )
@@ -310,12 +328,15 @@ void R_ImageList_f( void ) {
 			name = buf;
 		}
 
+		matchCount++;
 		ri.Printf( PRINT_ALL, " %3i %5i %5i %s %4i%s %s\n", i, image->uploadWidth, image->uploadHeight, format, displaySize, sizeSuffix, name );
 		estTotalSize += estSize;
 	}
 
 	ri.Printf( PRINT_ALL, " -----------------------\n" );
 	ri.Printf( PRINT_ALL, " approx %i kbytes\n", (estTotalSize + 1023) / 1024 );
+	if ( match && matchCount > 0 && matchCount != tr.numImages )
+		ri.Printf( PRINT_ALL, " %i images found\n", matchCount );
 	ri.Printf( PRINT_ALL, " %i total images\n\n", tr.numImages );
 }
 

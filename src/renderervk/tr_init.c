@@ -1994,7 +1994,7 @@ static void R_Register( void )
 	ri.Cvar_SetDescription( r_screenshotJpegQuality, "Controls quality of Jpeg screenshots when using screenshotJpeg" );
 
 	r_bloom_threshold = ri.Cvar_Get( "r_bloom_threshold", "0.6", CVAR_ARCHIVE_ND );
-	ri.Cvar_SetDescription( r_bloom_threshold, "Color level to extract to bloom texture, default is 0.6." );
+	ri.Cvar_SetDescription( r_bloom_threshold, "Color level to extract to bloom texture" );
 	ri.Cvar_SetGroup( r_bloom_threshold, CVG_RENDERER );
 
 	r_bloom_threshold_mode = ri.Cvar_Get( "r_bloom_threshold_mode", "0", CVAR_ARCHIVE_ND );
@@ -2002,7 +2002,7 @@ static void R_Register( void )
 	ri.Cvar_SetGroup( r_bloom_threshold_mode, CVG_RENDERER );
 
 	r_bloom_intensity = ri.Cvar_Get( "r_bloom_intensity", "0.5", CVAR_ARCHIVE_ND );
-	ri.Cvar_SetDescription( r_bloom_intensity, "Final bloom blend factor, default is 0.5." );
+	ri.Cvar_SetDescription( r_bloom_intensity, "Final bloom blend factor" );
 	ri.Cvar_SetGroup( r_bloom_intensity, CVG_RENDERER );
 
 	r_bloom_modulate = ri.Cvar_Get( "r_bloom_modulate", "0", CVAR_ARCHIVE_ND );

@@ -70,10 +70,9 @@ jobs:
     - name: Build Engine
       working-directory: ${{github.workspace}}/src
       run: |
-        msbuild win32\msvc2017\wolfded.vcxproj -m -p:TargetName=ETe.ded,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
+        msbuild win32\msvc2017\ete-ded.vcxproj -m -p:TargetName=ETe.ded,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
         msbuild win32\msvc2017\renderer.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
-        msbuild win32\msvc2017\wolf.vcxproj -m -p:TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0
-#msbuild win32\msvc2017\steam.vcxproj -m -p:TargetName=ete-steamlaunch,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
+        msbuild win32\msvc2017\ete.vcxproj -m -p:TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0
 
     - name: Build etmain
       working-directory: ${{github.workspace}}/src
