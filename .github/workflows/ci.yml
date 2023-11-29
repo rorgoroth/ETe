@@ -147,7 +147,7 @@ jobs:
       run: |
         cmake -E make_directory bin
         if [ ${{ matrix.arch }} == "x86" ]; then
-          cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }} -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/linux-i686.cmake
+          cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }} -DCMAKE_TOOLCHAIN_FILE=src/cmake/toolchains/linux-i686.cmake
         else
           cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }}
         fi
