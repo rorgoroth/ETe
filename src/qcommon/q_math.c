@@ -1081,6 +1081,10 @@ int	PlaneTypeForNormal (vec3_t normal) {
 MatrixMultiply
 ================
 */
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif /* __GNUC__ */
 void MatrixMultiply( float in1[3][3], float in2[3][3], float out[3][3] ) {
 	out[0][0] = in1[0][0] * in2[0][0] + in1[0][1] * in2[1][0] + in1[0][2] * in2[2][0];
 	out[0][1] = in1[0][0] * in2[0][1] + in1[0][1] * in2[1][1] + in1[0][2] * in2[2][1];
@@ -1092,6 +1096,9 @@ void MatrixMultiply( float in1[3][3], float in2[3][3], float out[3][3] ) {
 	out[2][1] = in1[2][0] * in2[0][1] + in1[2][1] * in2[1][1] + in1[2][2] * in2[2][1];
 	out[2][2] = in1[2][0] * in2[0][2] + in1[2][1] * in2[1][2] + in1[2][2] * in2[2][2];
 }
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 
 void AngleVectors( const vec3_t angles, vec3_t forward, vec3_t right, vec3_t up ) {
