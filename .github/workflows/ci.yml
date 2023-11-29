@@ -143,35 +143,17 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Create Build Directory
-      working-directory: ${{github.workspace}}/src
-      run: cmake -E make_directory ${{github.workspace}}/src/bin
-
-    - name: Configure CMake (Engine)
-      working-directory: ${{github.workspace}}/src/bin
+    - name: Configure CMake
       run: |
+        cmake -E make_directory bin
         if [ ${{ matrix.arch }} == "x86" ]; then
-          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }} -DBUILD_ETMAIN_MOD=OFF -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/linux-i686.cmake
+          cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }} -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/linux-i686.cmake
         else
-          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }} -DBUILD_ETMAIN_MOD=OFF
+          cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }}
         fi
 
-    - name: Build (Engine)
-      working-directory: ${{github.workspace}}/src/bin
-      run: cmake --build . --config ${{ matrix.config }} --parallel
-
-    - name: Configure CMake (etmain)
-      working-directory: ${{github.workspace}}/src/bin
-      run: |
-        rm CMakeCache.txt
-        if [ ${{ matrix.arch }} == "x86" ]; then
-          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DBUILD_DEDSERVER=OFF -DBUILD_CLIENT=OFF -DBUILD_ETMAIN_MOD=ON -DCMAKE_TOOLCHAIN_FILE=../cmake/toolchains/linux-i686.cmake
-        else
-          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DBUILD_DEDSERVER=OFF -DBUILD_CLIENT=OFF -DBUILD_ETMAIN_MOD=ON
-        fi
-
-    - name: Build (etmain)
-      working-directory: ${{github.workspace}}/src/bin
+    - name: Build
+      working-directory: bin
       run: cmake --build . --config ${{ matrix.config }} --parallel
 
     - uses: actions/upload-artifact@v3
@@ -179,8 +161,8 @@ jobs:
       with:
         name: linux-${{ matrix.arch }}
         path: |
-          src/bin/ete*.${{ matrix.arch }}
-          src/bin/*.so
+          bin/ete*.${{ matrix.arch }}
+          bin/*.so
         if-no-files-found: error
         retention-days: 5
 
@@ -206,26 +188,13 @@ jobs:
       with:
         submodules: recursive
 
-    - name: Create Build Directory
-      working-directory: ${{github.workspace}}/src
-      run: cmake -E make_directory ${{github.workspace}}/src/bin
-
-    - name: Configure CMake (Engine)
-      working-directory: ${{github.workspace}}/src/bin
-      run: cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=TRUE -DBUILD_ETMAIN_MOD=OFF -DUSE_SYSTEM_JPEG=OFF
-
-    - name: Build (Engine)
-      working-directory: ${{github.workspace}}/src/bin
-      run: cmake --build . --config ${{ matrix.config }} --parallel
-
-    - name: Configure CMake (etmain)
-      working-directory: ${{github.workspace}}/src/bin
+    - name: Configure CMake
       run: |
-        rm CMakeCache.txt
-        cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DBUILD_DEDSERVER=FALSE -DBUILD_CLIENT=FALSE -DBUILD_ETMAIN_MOD=TRUE
+        cmake -E make_directory bin
+        cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=TRUE -DBUILD_ETMAIN_MOD=OFF -DUSE_SYSTEM_JPEG=OFF
 
-    - name: Build (etmain)
-      working-directory: ${{github.workspace}}/src/bin
+    - name: Build
+      working-directory: bin
       run: cmake --build . --config ${{ matrix.config }} --parallel
 
     - uses: actions/upload-artifact@v3
