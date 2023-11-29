@@ -84,7 +84,7 @@ jobs:
         msbuild src\win32\msvc2017\renderervk.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
         msbuild src\win32\msvc2017\ete.vcxproj -m -p:TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0
         copy src\win32\msvc2017\output\${{ matrix.config }}\ETe.exe bin\ETe-vulkan${{ matrix.suffix }}.exe
-        msbuild src\win32\msvc2017\renderer.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
+        msbuild src\win32\msvc2017\renderervk.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
         msbuild src\win32\msvc2017\ete.vcxproj -m -p:TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 -t:Clean
 
         msbuild src\win32\msvc2017\game.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
