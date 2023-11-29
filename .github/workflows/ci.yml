@@ -47,7 +47,7 @@ jobs:
             pkg_suffix: x64
 
     steps:
-    - uses: microsoft/setup-msbuild@v1.1.3
+    - uses: microsoft/setup-msbuild@v1.3
 
     #- name: Install v141_xp Toolset
     #  shell: powershell
@@ -63,7 +63,7 @@ jobs:
     #        Write-Host "components were not installed"
     #    }
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
 
@@ -139,7 +139,7 @@ jobs:
           sudo apt-get -qq update
           sudo apt-get -y install ninja-build libjpeg-dev libsdl2-dev libcurl4-openssl-dev
         fi
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
 
@@ -202,7 +202,7 @@ jobs:
     - name: Install tools
       run: brew install coreutils ninja pkg-config sdl2
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
 
@@ -243,7 +243,7 @@ jobs:
     needs: [windows-msvc, ubuntu-x86, macos-x86]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
 
