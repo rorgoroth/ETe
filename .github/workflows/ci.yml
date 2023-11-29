@@ -147,9 +147,9 @@ jobs:
       run: |
         cmake -E make_directory bin
         if [ ${{ matrix.arch }} == "x86" ]; then
-          cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }} -DCMAKE_TOOLCHAIN_FILE=src/cmake/toolchains/linux-i686.cmake
+          cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }} -DBUILD_ETMAIN_MOD=ON -DCMAKE_TOOLCHAIN_FILE=../src/cmake/toolchains/linux-i686.cmake
         else
-          cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }}
+          cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }} -DBUILD_ETMAIN_MOD=ON
         fi
 
     - name: Build
@@ -191,7 +191,7 @@ jobs:
     - name: Configure CMake
       run: |
         cmake -E make_directory bin
-        cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=TRUE -DUSE_SYSTEM_JPEG=OFF
+        cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=TRUE -DBUILD_ETMAIN_MOD=ON -DUSE_SYSTEM_JPEG=OFF
 
     - name: Build
       working-directory: bin
