@@ -192,7 +192,6 @@
     <ClCompile Include="..\..\qcommon\puff.c" />
     <ClCompile Include="..\..\renderervk\tr_animation_mdm.c" />
     <ClCompile Include="..\..\renderervk\tr_animation_mds.c" />
-    <ClCompile Include="..\..\renderervk\tr_arb.c" />
     <ClCompile Include="..\..\renderervk\tr_backend.c" />
     <ClCompile Include="..\..\renderervk\tr_bsp.c" />
     <ClCompile Include="..\..\renderervk\tr_cmds.c" />
