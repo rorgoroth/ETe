@@ -191,7 +191,7 @@ jobs:
     - name: Configure CMake
       run: |
         cmake -E make_directory bin
-        cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=TRUE -DBUILD_ETMAIN_MOD=OFF -DUSE_SYSTEM_JPEG=OFF
+        cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=TRUE -DUSE_SYSTEM_JPEG=OFF
 
     - name: Build
       working-directory: bin
