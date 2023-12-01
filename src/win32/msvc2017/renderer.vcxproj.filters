@@ -9,17 +9,6 @@
       <UniqueIdentifier>{acb4f07f-1198-411e-a326-aa2188b65e48}</UniqueIdentifier>
       <Extensions>h;hpp;hxx;hm;inl</Extensions>
     </Filter>
-    <Filter Include="FreeType2">
-      <UniqueIdentifier>{de2c38dd-358a-4164-97bf-c9d265bde127}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="FreeType2\Header Files">
-      <UniqueIdentifier>{d9e166b5-6ea1-48f8-8c18-3360d2e9cf0f}</UniqueIdentifier>
-      <Extensions>.h</Extensions>
-    </Filter>
-    <Filter Include="FreeType2\Source Files">
-      <UniqueIdentifier>{7cb1339c-86ac-41c6-847c-8582131c329d}</UniqueIdentifier>
-    </Filter>
-  </ItemGroup>
   <ItemGroup>
     <None Include="ref_trin.def">
       <Filter>Source Files</Filter>
