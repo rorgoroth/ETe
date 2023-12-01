@@ -317,12 +317,7 @@
     <ClCompile Include="..\win_main.c" />
     <ClCompile Include="..\win_minimize.c" />
     <ClCompile Include="..\win_qgl.c" />
-    <ClCompile Include="..\win_qvk.c">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="..\win_qvk.c" />
     <ClCompile Include="..\win_shared.c" />
     <ClCompile Include="..\win_snd.c" />
     <ClCompile Include="..\win_syscon.c" />
@@ -375,11 +370,11 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="libjpeg.vcxproj">
-      <Project>{17867af4-12cb-4847-a13e-bf37d8bdf597}</Project>
+      <Project>{17867AF4-12CB-4847-A13E-BF37D8BDF597}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
     <ProjectReference Include="Splines.vcxproj">
-      <Project>{0c24e6e9-2b9f-43ae-adb7-b7693966f41e}</Project>
+      <Project>{0C24E6E9-2B9F-43AE-ADB7-B7693966F41E}</Project>
       <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
