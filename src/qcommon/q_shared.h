@@ -109,6 +109,11 @@ If you have questions concerning this license or the applicable additional terms
 //#pragma intrinsic( memset, memcpy )
 #endif
 
+// This warning is broken on GCC 11, which may be used on GHA still
+#if !defined(__clang__) && (__GNUC__ == 11)
+#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+
 //Ignore __attribute__ on non-gcc/clang platforms
 #if !defined(__GNUC__) && !defined(__clang__)
 #ifndef __attribute__
