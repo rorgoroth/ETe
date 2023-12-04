@@ -40,7 +40,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #include "../client/keys.h"
 
-const int demo_protocols[] = { OLD_PROTOCOL_VERSION, NEW_PROTOCOL_VERSION, 0 };
+const int demo_protocols[] = { VERY_OLD_PROTOCOL_VERSION, OLD_PROTOCOL_VERSION, NEW_PROTOCOL_VERSION, 0 };
 
 #define USE_MULTI_SEGMENT // allocate additional zone segments on demand
 
