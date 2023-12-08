@@ -4,16 +4,13 @@
 
 Install Visual Studio Community Edition 2017 or later and compile all projects from solution
 
-`src/win32/msvc2017/wolf.sln`
+`src/win32/msvc2017/ete.sln`
 
-Default settings are using Visual Studio 2017 with XP compatible toolset.
-*Note: Visual Studio 2022 no longer supports the XP toolset.*
+32-bit Win32 recommended over 64-bit x64 for compatibility with a wider selection of mods.
 
-Only 32-bit binaries compatible until 64-bit mods become available and a 64-bit etmain is available
+Copy resulting exes from `src/win32/msvc2017/output/[Debug|Release]` directory
 
-Copy resulting exe from `src/win32/msvc2017/output/[Debug|Release]` directory
-
-~~To compile with Vulkan backend - clean solution, right click on `wolf` project, find `Project Dependencies` and select `renderervk` instead of `renderer`~~
+To compile with Vulkan backend - clean solution, right click on `ete` project, find `Project Dependencies` and select `renderervk` instead of `renderer`
 
 ---
 
@@ -51,12 +48,12 @@ cd build
 
 Configure with CMake (without Ninja):
 ```
-cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release  -DCMAKE_TOOLCHAIN_FILE="../cmake/toolchains/linux-i686.cmake" -DCMAKE_INSTALL_PREFIX=/path/to/et-installation ..
+cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="../cmake/toolchains/linux-i686.cmake" -DCMAKE_INSTALL_PREFIX=/path/to/et-installation ..
 ```
 
 Configure with CMake & Ninja:
 ```
-cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release  -DCMAKE_TOOLCHAIN_FILE="../cmake/toolchains/linux-i686.cmake" -DCMAKE_INSTALL_PREFIX=/path/to/et-installation ..
+cmake -G "Ninja" -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="../cmake/toolchains/linux-i686.cmake" -DCMAKE_INSTALL_PREFIX=/path/to/et-installation ..
 ```
 
 You may omit the toolchain section if you do not wish to cross compile for 32-bit binaries. Also omit the i386 and multilib portions of the packages you download from apt.
