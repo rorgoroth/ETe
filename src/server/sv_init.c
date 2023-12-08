@@ -789,11 +789,11 @@ void SV_SpawnServer( const char *mapname ) {
 	Cvar_Set( "sv_pakNames", "" ); // not used on client-side (except for FS_VerifyOfficialPaks :@@@@)
 
 	if ( sv_pure->integer ) {
-		int freespace, pakslen, infolen, paknameslen;
+		int freespace, pakslen, infolen, paknameslen, numpurepaks;
 		qboolean overflowed = qfalse, nameoverflowed = qfalse;
 		qboolean infoTruncated = qfalse;
 
-		p = FS_LoadedPakChecksums( &overflowed );
+		p = FS_LoadedPakChecksums( &overflowed, &numpurepaks );
 		pnames = FS_LoadedPakNames( qtrue, &nameoverflowed );
 
 		pakslen = strlen( p ) + 9; // + strlen( "\\sv_paks\\" )
@@ -805,12 +805,12 @@ void SV_SpawnServer( const char *mapname ) {
 			Com_Printf( S_COLOR_YELLOW "WARNING: truncated systeminfo!\n" );
 		}
 
-		if ( pakslen > freespace || paknameslen > freespace || pakslen + paknameslen > freespace || infolen + paknameslen + pakslen >= BIG_INFO_STRING || overflowed || nameoverflowed ) {
+		if ( numpurepaks > 256 || pakslen > freespace || paknameslen > freespace || pakslen + paknameslen > freespace || infolen + paknameslen + pakslen >= BIG_INFO_STRING || overflowed || nameoverflowed ) {
 			// switch to degraded pure mode
 			// this could *potentially* lead to a false "unpure client" detection
 			// which is better than guaranteed drop
 			// however due to requirement for sv_pakNames in ET over Q3, it is very likely that drops will happen for vanilla clients
-			if ( sv_paksOverflowMode->integer == 2 ) {
+			if ( sv_paksOverflowMode->integer == 2 || numpurepaks > 256 ) {
 				qboolean refoverflowed = qfalse, refnameoverflowed = qfalse;
 				p = FS_ReferencedPakChecksums( &refoverflowed );
 				pnames = FS_ReferencedPakNames( &refnameoverflowed );
@@ -821,7 +821,12 @@ void SV_SpawnServer( const char *mapname ) {
 					Com_Error( ERR_FATAL, "Server is referencing too many pk3s and cannot compensate with referenced only mode" );
 				}
 				else {
-					Com_Printf( S_COLOR_ORANGE "WARNING: using alternate sv_paks setup with sv_referencedPaks to avoid gamestate overflow\n" );
+					if ( numpurepaks > 256 ) {
+						Com_Printf( S_COLOR_RED "NOTICE: using alternate sv_paks setup with referenced values only because thenumber of pure pk3s exceeds backwards compatible amount (256)\n" );
+					}
+					else {
+						Com_Printf( S_COLOR_ORANGE "WARNING: using alternate sv_paks setup with sv_referencedPaks to avoid gamestate overflow\n" );
+					}
 					// the server sends these to the clients so they will only
 					// load pk3s also loaded at the server
 					Cvar_Set( "sv_paks", p );

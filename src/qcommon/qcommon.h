@@ -868,7 +868,7 @@ int		FS_Seek( fileHandle_t f, long offset, fsOrigin_t origin );
 qboolean FS_FilenameCompare( const char *s1, const char *s2 );
 
 const char *FS_LoadedPakNames( qboolean fake, qboolean *overflowed );
-const char *FS_LoadedPakChecksums( qboolean *overflowed );
+const char *FS_LoadedPakChecksums( qboolean *overflowed, int *numpaks );
 // Returns a space separated string containing the checksums of all loaded pk3 files.
 // Servers with sv_pure set will get this string and pass it to clients.
 

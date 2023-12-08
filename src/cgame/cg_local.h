@@ -1760,10 +1760,10 @@ typedef struct cg_weaponstats_s {
 } cg_weaponstats_t;
 
 typedef struct {
-	char strWS[WS_MAX][MAX_STRING_TOKENS];
-	char strExtra[2][MAX_STRING_TOKENS];
-	char strRank[MAX_STRING_TOKENS];
-	char strSkillz[SK_NUM_SKILLS][MAX_STRING_TOKENS];
+	char strWS[WS_MAX][256];
+	char strExtra[2][256];
+	char strRank[256];
+	char strSkillz[SK_NUM_SKILLS][256];
 	int cWeapons;
 	int cSkills;
 	qboolean fHasStats;
@@ -1775,7 +1775,7 @@ typedef struct {
 } gameStats_t;
 
 typedef struct {
-	char strWS[WS_MAX * 2][MAX_STRING_TOKENS];
+	char strWS[WS_MAX * 2][256];
 	int cWeapons;
 	int fadeTime;
 	int show;
@@ -1827,7 +1827,7 @@ typedef struct {
 	int voteYes;
 	int voteNo;
 	qboolean voteModified;                  // beep whenever changed
-	char voteString[MAX_STRING_TOKENS];
+	char voteString[256];
 
 	int levelStartTime;
 	int intermissionStartTime;

@@ -1884,8 +1884,8 @@ Cmd_CallVote_f
 */
 qboolean Cmd_CallVote_f( gentity_t *ent, unsigned int dwCommand, qboolean fRefCommand ) {
 	int i;
-	char arg1[MAX_STRING_TOKENS];
-	char arg2[MAX_STRING_TOKENS];
+	char arg1[256];
+	char arg2[256];
 
 	// Normal checks, if its not being issued as a referee command
 	if ( !fRefCommand ) {

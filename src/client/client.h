@@ -183,7 +183,7 @@ typedef struct {
 	entityState_t parseEntities[MAX_PARSE_ENTITIES];
 
 	qboolean corruptedTranslationFile;
-	char translationVersion[MAX_STRING_TOKENS];
+	char translationVersion[256];
 	// -NERVE - SMF
 
 	qboolean cameraMode;

@@ -343,19 +343,17 @@ static fileHandleData_t	fsh[MAX_FILE_HANDLES];
 // wether we did a reorder on the current search path when joining the server
 qboolean fs_reordered;
 
-#define MAX_REF_PAKS	1024 /* note q3e:MAX_STRING_TOKENS=1024, et=256 enforcing to 1024 to match Q3e behavior*/
-
 // never load anything from pk3 files that are not present at the server when pure
 // ex: when fs_numServerPaks != 0, FS_FOpenFileRead won't load anything outside of pk3 except .cfg .menu .game .dat
 static int		fs_numServerPaks = 0;
-static int		fs_serverPaks[MAX_REF_PAKS];			// checksums
-static char		*fs_serverPakNames[MAX_REF_PAKS];		// pk3 names
+static int		fs_serverPaks[MAX_STRING_TOKENS];			// checksums
+static char		*fs_serverPakNames[MAX_STRING_TOKENS];		// pk3 names
 
 // only used for autodownload, to make sure the client has at least
 // all the pk3 files that are referenced at the server side
 static int		fs_numServerReferencedPaks;
-static int		fs_serverReferencedPaks[MAX_REF_PAKS];		// checksums
-static char		*fs_serverReferencedPakNames[MAX_REF_PAKS];	// pk3 names
+static int		fs_serverReferencedPaks[MAX_STRING_TOKENS];		// checksums
+static char		*fs_serverReferencedPakNames[MAX_STRING_TOKENS];	// pk3 names
 
 int	fs_lastPakIndex;
 
@@ -4881,8 +4879,8 @@ The string is the format:
 @remotename@localname [repeat]
 
 static int		fs_numServerReferencedPaks;
-static int		fs_serverReferencedPaks[MAX_REF_PAKS];
-static char		*fs_serverReferencedPakNames[MAX_REF_PAKS];
+static int		fs_serverReferencedPaks[MAX_STRING_TOKENS];
+static char		*fs_serverReferencedPakNames[MAX_STRING_TOKENS];
 
 ----------------
 dlstring == qfalse
@@ -5586,7 +5584,7 @@ Returns a space separated string containing the checksums of all loaded pk3 file
 Servers with sv_pure set will get this string and pass it to clients.
 =====================
 */
-const char *FS_LoadedPakChecksums( qboolean *overflowed ) {
+const char *FS_LoadedPakChecksums( qboolean *overflowed, int *numpaks ) {
 	static char	info[BIG_INFO_STRING];
 	const searchpath_t *search;
 	char buf[ 32 ];
@@ -5596,6 +5594,7 @@ const char *FS_LoadedPakChecksums( qboolean *overflowed ) {
 	s = info;
 	info[0] = '\0';
 	max = &info[sizeof(info)-1];
+	*numpaks = 0;
 	*overflowed = qfalse;
 
 	for ( search = fs_searchpaths ; search ; search = search->next ) {
@@ -5617,6 +5616,7 @@ const char *FS_LoadedPakChecksums( qboolean *overflowed ) {
 		}
 
 		s = Q_stradd( s, buf );
+		(*numpaks)++;
 	}
 
 	return info;
@@ -5988,7 +5988,7 @@ void FS_ClearPureServerPaks(void)
 	/*memset( fs_serverPaks, 0, sizeof( fs_serverPaks ) );
 	memset( fs_serverReferencedPaks, 0, sizeof( fs_serverReferencedPaks ) );
 
-	for ( i = 0; i < MAX_REF_PAKS; i++ ) {
+	for ( i = 0; i < MAX_STRING_TOKENS; i++ ) {
 		if ( fs_serverPakNames[i] )
 			Z_Free( fs_serverPakNames[i] );
 		if ( fs_serverReferencedPakNames[i] )
