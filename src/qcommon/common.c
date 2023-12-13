@@ -4073,7 +4073,7 @@ void Com_Init( char *commandLine ) {
 
 	// get dedicated here for proper hunk megs initialization
 #ifdef DEDICATED
-	com_dedicated = Cvar_Get( "dedicated", "1", CVAR_INIT );
+	com_dedicated = Cvar_Get( "dedicated", "2", CVAR_INIT );
 	Cvar_CheckRange( com_dedicated, "1", "2", CV_INTEGER );
 #else
 	com_dedicated = Cvar_Get( "dedicated", "0", CVAR_LATCH );
