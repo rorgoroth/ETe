@@ -1832,11 +1832,7 @@ static void R_Register( void )
 	r_textureMode = ri.Cvar_Get( "r_textureMode", "GL_LINEAR_MIPMAP_NEAREST", CVAR_ARCHIVE );
 	ri.Cvar_SetDescription( r_textureMode, "Texture interpolation mode:\n GL_NEAREST: Nearest neighbor interpolation and will therefore appear similar to Quake II except with the added colored lighting\n GL_LINEAR: Linear interpolation and will appear to blend in objects that are closer than the resolution that the textures are set as\n GL_NEAREST_MIPMAP_NEAREST: Nearest neighbor interpolation with mipmapping for bilinear hardware, mipmapping will blend objects that are farther away than the resolution that they are set as\n GL_LINEAR_MIPMAP_NEAREST: Linear interpolation with mipmapping for bilinear hardware\n GL_NEAREST_MIPMAP_LINEAR: Nearest neighbor interpolation with mipmapping for trilinear hardware\n GL_LINEAR_MIPMAP_LINEAR: Linear interpolation with mipmapping for trilinear hardware" );
 	ri.Cvar_SetGroup( r_textureMode, CVG_RENDERER );
-#if defined(__APPLE__) || defined(__APPLE_CC__)
-	r_gamma = ri.Cvar_Get( "r_gamma", "1.2", CVAR_ARCHIVE_ND );
-#else
 	r_gamma = ri.Cvar_Get( "r_gamma", "1.3", CVAR_ARCHIVE_ND );
-#endif
 	ri.Cvar_CheckRange( r_gamma, "0.5", "3", CV_FLOAT );
 	ri.Cvar_SetDescription( r_gamma, "Gamma correction factor" );
 	ri.Cvar_SetGroup( r_gamma, CVG_RENDERER );

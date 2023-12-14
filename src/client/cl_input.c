@@ -491,15 +491,11 @@ static void CL_JoystickMove( usercmd_t *cmd ) {
 		anglespeed = 0.001 * cls.frametime;
 	}
 
-#if defined(__APPLE__) || defined(__APPLE_CC__)
-	cmd->rightmove = ClampCharMove( cmd->rightmove + cl.joystickAxis[AXIS_SIDE] );
-#else
 	if ( !kb[KB_STRAFE].active ) {
 		cl.viewangles[YAW] += anglespeed * cl_yawspeed->value * cl.joystickAxis[AXIS_SIDE];
 	} else {
 		cmd->rightmove = ClampCharMove( cmd->rightmove + cl.joystickAxis[AXIS_SIDE] );
 	}
-#endif
 	if ( kb[KB_MLOOK].active ) {
 		cl.viewangles[PITCH] += anglespeed * cl_pitchspeed->value * cl.joystickAxis[AXIS_FORWARD];
 	} else {

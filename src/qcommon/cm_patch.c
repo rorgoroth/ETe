@@ -536,7 +536,7 @@ static int CM_FindPlane2( const float plane[4], qboolean *flipped ) {
 
 	// add a new plane
 	if ( numPlanes == MAX_PATCH_PLANES ) {
-		Com_Error( ERR_DROP, "MAX_PATCH_PLANES" );
+		Com_Error( ERR_DROP, "%s: MAX_PATCH_PLANES (%i) reached", __func__, MAX_PATCH_PLANES );
 	}
 
 	Vector4Copy( plane, planes[numPlanes].plane );
@@ -591,7 +591,7 @@ static int CM_FindPlane( const float *p1, const float *p2, const float *p3 ) {
 
 	// add a new plane
 	if ( numPlanes == MAX_PATCH_PLANES ) {
-		Com_Error( ERR_DROP, "MAX_PATCH_PLANES" );
+		Com_Error( ERR_DROP, "%s: MAX_PATCH_PLANES (%i) reached", __func__, MAX_PATCH_PLANES );
 	}
 
 	Vector4Copy( plane, planes[numPlanes].plane );
