@@ -285,11 +285,7 @@ SV_BoundMaxClients
 */
 static void SV_BoundMaxClients( int minimum ) {
 	// get the current maxclients value
-#if defined(__APPLE__) || defined(__APPLE_CC__)
-	Cvar_Get( "sv_maxclients", "16", 0 );         //DAJ HOG
-#else
 	Cvar_Get( "sv_maxclients", "20", 0 );         // NERVE - SMF - changed to 20 from 8
-#endif
 
 	// START	xkan, 10/03/2002
 	// allow many bots in single player. note that this pretty much means all previous
@@ -1047,6 +1043,9 @@ void SV_Init( void )
 
 	sv_filter = Cvar_Get( "sv_filter", "filter.txt", CVAR_ARCHIVE );
 	Cvar_SetDescription( sv_filter, "Cvar that point to filter file, if it is "" then filtering will be disabled" );
+
+	sv_userinfoFloodProtect = Cvar_Get( "sv_userinfoFloodProtect", "1", CVAR_ARCHIVE_ND );
+	Cvar_SetDescription( sv_userinfoFloodProtect, "Toggle server flood protection of userinfo changes to keep players from bringing the server down" );
 
 	sv_filterCommands = Cvar_Get( "sv_filterCommands", "1", CVAR_ARCHIVE );
 	Cvar_CheckRange( sv_filterCommands, "0", "2", CV_INTEGER );

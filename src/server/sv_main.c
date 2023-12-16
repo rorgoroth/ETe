@@ -73,8 +73,6 @@ cvar_t* sv_gameType;
 //cvar_t	*sv_gameskill;
 // done
 
-cvar_t  *sv_reloading;
-
 cvar_t  *sv_showAverageBPS;     // NERVE - SMF - net debugging
 
 cvar_t  *sv_wwwDownload; // server does a www dl redirect
@@ -92,6 +90,8 @@ cvar_t  *sv_fullmsg;
 
 cvar_t *sv_levelTimeReset;
 cvar_t *sv_filter;
+
+cvar_t *sv_userinfoFloodProtect;
 
 cvar_t  *sv_filterCommands;
 
@@ -1750,7 +1750,7 @@ int SV_RateMsec( const client_t *client )
 {
 	int rate, rateMsec;
 	int messageSize;
-	
+
 	if ( !client->rate )
 		return 0;
 
@@ -1762,10 +1762,10 @@ int SV_RateMsec( const client_t *client )
 	else
 #endif
 		messageSize += UDPIP_HEADER_SIZE;
-		
+
 	rateMsec = messageSize * 1000 / ((int) (client->rate * com_timescale->value));
 	rate = Sys_Milliseconds() - client->netchan.lastSentTime;
-	
+
 	if ( rate > rateMsec )
 		return 0;
 	else

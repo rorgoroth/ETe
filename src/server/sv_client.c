@@ -2170,7 +2170,11 @@ qboolean SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean premapre
 	for ( ucmd = ucmds; ucmd->name; ucmd++ ) {
 		if ( !strcmp( Cmd_Argv(0), ucmd->name ) ) {
 			if ( ucmd->func == SV_UpdateUserinfo_f ) {
-				if ( bFloodProtect ) {
+#ifndef DEDICATED
+				if ( !com_cl_running->integer && bFloodProtect && sv_userinfoFloodProtect->integer ) {
+#else
+				if ( bFloodProtect && sv_userinfoFloodProtect->integer ) {
+#endif
 					if ( SVC_RateLimit( &cl->info_rate, 5, 1000 ) ) {
 						return qfalse; // lag flooder
 					}

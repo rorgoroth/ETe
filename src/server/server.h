@@ -348,8 +348,8 @@ extern cvar_t  *sv_friendlyFire;        // NERVE - SMF
 extern cvar_t  *sv_maxlives;            // NERVE - SMF
 extern cvar_t  *sv_maxclients;
 extern cvar_t  *sv_needpass;
-extern	cvar_t	*sv_maxclientsPerIP;
-extern	cvar_t	*sv_clientTLD;
+extern cvar_t  *sv_maxclientsPerIP;
+extern cvar_t  *sv_clientTLD;
 
 extern cvar_t  *sv_privateClients;
 extern cvar_t  *sv_hostname;
@@ -362,7 +362,7 @@ extern cvar_t  *sv_mapname;
 extern cvar_t  *sv_mapChecksum;
 extern cvar_t  *sv_referencedPakNames;
 extern cvar_t  *sv_serverid;
-extern	cvar_t	*sv_minRate;
+extern cvar_t  *sv_minRate;
 extern cvar_t  *sv_maxRate;
 //extern	cvar_t	*sv_gametype;
 extern cvar_t  *sv_pure;
@@ -382,11 +382,10 @@ extern cvar_t  *sv_paksOverflowMode;
 //extern	cvar_t	*sv_gameskill;
 // done
 
-extern cvar_t  *sv_reloading;
-
-
 extern	cvar_t *sv_levelTimeReset;
 extern	cvar_t *sv_filter;
+
+extern	cvar_t *sv_userinfoFloodProtect;
 
 // TTimo - autodl
 extern cvar_t *sv_dl_maxRate;
