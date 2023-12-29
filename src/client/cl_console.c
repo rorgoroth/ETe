@@ -46,6 +46,7 @@ static cvar_t	*con_conspeed;
 static cvar_t	*con_notifytime;
 static cvar_t	*con_autoclear;
 static cvar_t	*con_drawnotify;
+static cvar_t	*con_maxnotify;
 static cvar_t	*con_height;
 // DHM - Nerve :: Must hold CTRL + SHIFT + ~ to get console
 static cvar_t	*con_restricted;
@@ -414,6 +415,10 @@ void Con_Init( void )
 	con_drawnotify = Cvar_Get( "con_drawnotify", "0", CVAR_CHEAT );
 	Cvar_SetDescription( con_drawnotify, "Draw console print messages at top of screen" );
 
+	con_maxnotify = Cvar_Get( "con_maxnotify", "4", CVAR_ARCHIVE_ND );
+	Cvar_CheckRange( con_maxnotify, "0", XSTRING( NUM_CON_TIMES ), CV_INTEGER );
+	Cvar_SetDescription( con_maxnotify, "Maximum number console print messages at top of screen" );
+
 	Field_Clear( &g_consoleField );
 	g_consoleField.widthInChars = g_console_field_width;
 
@@ -685,15 +690,17 @@ static void Con_DrawNotify( void )
 	int		currentColorIndex;
 	int		colorIndex;
 
+	// assumes con_maxnotify is > 0, checked before caller
+
 	currentColorIndex = ColorIndex( COLOR_WHITE );
 	re.SetColor( g_color_table[ currentColorIndex ] );
 
 	v = 0;
-	for (i= con.current-NUM_CON_TIMES+1 ; i<=con.current ; i++)
+	for (i= con.current-con_maxnotify->integer+1 ; i<=con.current ; i++)
 	{
 		if (i < 0)
 			continue;
-		time = con.times[i % NUM_CON_TIMES];
+		time = con.times[i % con_maxnotify->integer];
 		if (time == 0)
 			continue;
 		time = cls.realtime - time;
@@ -959,7 +966,7 @@ void Con_DrawConsole( void ) {
 		Con_DrawSolidConsole( con.displayFrac );
 	} else {
 		// draw notify lines
-		if ( cls.state == CA_ACTIVE && con_drawnotify->integer ) {
+		if ( cls.state == CA_ACTIVE && con_drawnotify->integer && con_maxnotify->integer > 0 ) {
 			Con_DrawNotify();
 		}
 	}

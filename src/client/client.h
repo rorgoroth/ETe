@@ -665,7 +665,7 @@ qboolean CL_ValidPakSignature( const byte *data, int len );
 //
 // console
 //
-#define NUM_CON_TIMES 4
+#define NUM_CON_TIMES 10
 
 //#define		CON_TEXTSIZE	32768
 //#define     CON_TEXTSIZE    65536   // (SA) DM want's more console...
