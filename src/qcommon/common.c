@@ -3058,8 +3058,8 @@ void Com_ExecuteCfg(qboolean safeMode)
 {
 	Cbuf_ExecuteText(EXEC_NOW, "exec default.cfg\n");
 	Cbuf_Execute(); // Always execute after exec to prevent text buffer overflowing
-	Cbuf_ExecuteText(EXEC_NOW, "exec language.cfg\n" );     // NERVE - SMF
-	Cbuf_Execute(); // Always execute after exec to prevent text buffer overflowing
+	//Cbuf_ExecuteText(EXEC_NOW, "exec language.cfg\n" );     // NERVE - SMF
+	//Cbuf_Execute(); // Always execute after exec to prevent text buffer overflowing
 
 	// skip the etconfig.cfg if "safe" is on the command line
 	if ( !safeMode ) {
