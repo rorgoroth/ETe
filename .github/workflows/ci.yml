@@ -1,42 +1,34 @@
 name: build
 
 on:
-  # Run on pushes to tags, the "master" branch, and PR's
+  workflow_dispatch:
   push:
-    tags-ignore:
-    branches:
-      - master
+    branches: [master]
     paths-ignore:
       - '**.md'
       - '*.txt'
       - '.gitignore'
       - 'docs/*'
   pull_request:
+    branches: [master]
     paths-ignore:
       - '**.md'
       - '*.txt'
       - '.gitignore'
       - 'docs/*'
-
-  workflow_dispatch:
+  release:
+    types: [published]
 
 jobs:
-  windows-msvc:
-    name: ${{ matrix.config }} Windows ${{ matrix.arch }}
-    runs-on: windows-2019
+  msvc:
+    name: Windows ${{ matrix.arch }} ${{ matrix.config }} 
+    runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
-        #arch: [arm64, x86, x64]
-        #arch: [x86, x64]
         arch: [x86, x64]
         config: [Release]
         include:
-         # - arch: arm64
-         #   platform: ARM64
-         #   suffix: .arm64
-         #   pkg_suffix: arm64
-
           - arch: x86
             platform: Win32
             pkg_suffix: x86
@@ -47,7 +39,7 @@ jobs:
             pkg_suffix: x64
 
     steps:
-    - uses: microsoft/setup-msbuild@v1.3
+    - uses: microsoft/setup-msbuild@v2
 
     #- name: Install v141_xp Toolset
     #  shell: powershell
@@ -99,25 +91,21 @@ jobs:
         msbuild src\win32\msvc2017\ui.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
         msbuild src\win32\msvc2017\cgame.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       if: ${{ matrix.config == 'Release' }}
       with:
         name: windows-${{ matrix.pkg_suffix }}
-        path: |
-          bin/*.exe
-          bin/*.dll
+        path: bin
         if-no-files-found: error
         retention-days: 5
 
-  ubuntu-x86:
-    name: ${{ matrix.config }} Ubuntu ${{ matrix.arch }}
+  ubuntu:
+    name: Ubuntu ${{ matrix.arch }} ${{ matrix.config }}
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         arch: [x86, x86_64]
-        cc: [gcc]
-        cxx: [g++]
         config: [Release]
         include:
           - config: Release
@@ -128,13 +116,15 @@ jobs:
             use_sdl: true
 
     steps:
-    - name: Install tools
+    - name: Setup Build Environment
       run: |
         if [ ${{ matrix.arch }} == "x86" ]; then
           sudo dpkg --add-architecture i386
           sudo apt-get -qq update
+          sudo apt-get -y install aptitude
           sudo apt-get -y install gcc-multilib g++-multilib ninja-build
-          sudo apt-get -y install libjpeg-dev:i386 libsdl2-dev:i386 libcurl4-openssl-dev:i386
+          sudo apt-get -y install --allow-downgrades libpcre2-8-0:i386 libjpeg-dev:i386 libcurl4-openssl-dev:i386
+          sudo aptitude -y install libglib2.0-dev:i386 libsdl2-dev:i386
         else
           sudo apt-get -qq update
           sudo apt-get -y install ninja-build libjpeg-dev libsdl2-dev libcurl4-openssl-dev
@@ -156,32 +146,33 @@ jobs:
       working-directory: bin
       run: cmake --build . --config ${{ matrix.config }} --parallel
 
-    - uses: actions/upload-artifact@v3
-      if: matrix.cc == 'gcc' && matrix.config == 'Release'
+    - uses: actions/upload-artifact@v4
+      if: matrix.config == 'Release'
       with:
         name: linux-${{ matrix.arch }}
-        path: |
-          bin/ete*.${{ matrix.arch }}
-          bin/*.so
+        path: bin
         if-no-files-found: error
         retention-days: 5
 
-  macos-x86:
-    name: ${{ matrix.config }} macOS ${{ matrix.arch }}
-    runs-on: macos-latest
+  macos:
+    name: macOS ${{ matrix.arch }} ${{ matrix.config }}
+    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
-        arch: [x86_64]
-        cc: [clang]
-        cxx: [clang++]
-        config: [Debug]
+        runner: [macos-12, macos-14]
+        arch: [x86_64, arm64]
+        config: [Release]
         include:
-          - config: Debug
+          - runner: macos-12
+            arch: x86_64
+          - runner: macos-14
+            arch: arm64
+          - config: Release
             rule: install
 
     steps:
-    - name: Install tools
+    - name: Setup Build Environment
       run: brew install coreutils ninja pkg-config sdl2
 
     - uses: actions/checkout@v4
@@ -197,19 +188,17 @@ jobs:
       working-directory: bin
       run: cmake --build . --config ${{ matrix.config }} --parallel
 
-    - uses: actions/upload-artifact@v3
-      if: matrix.cc == 'clang' #&& matrix.config == 'Release'
+    - uses: actions/upload-artifact@v4
+      if: matrix.config == 'Release'
       with:
         name: macos-${{ matrix.arch }}
-        path: |
-          bin/ete*.${{ matrix.arch }}
-          bin/*_mac
+        path: bin
         if-no-files-found: error
         retention-days: 5
 
   create-testing:
     if: github.ref == 'refs/heads/master' && github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    needs: [windows-msvc, ubuntu-x86, macos-x86]
+    needs: [msvc, ubuntu, macos]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -217,7 +206,7 @@ jobs:
           submodules: recursive
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Create binary archives
         run: |
@@ -226,11 +215,13 @@ jobs:
           7z a -r ete-windows-msvc-x86.zip     ./windows-x86/* -x!*.dll
           7z a -r ete-windows-msvc-x64.zip     ./windows-x64/* -x!*.dll
           7z a -r ete-macos-x86_64.zip         ./macos-x86_64/* -x!*_mac
+          7z a -r ete-macos-arm64.zip         ./macos-arm64/* -x!*_mac
           7z a -r ete-linux-x86.zip            ./steam/steam_appid.txt
           7z a -r ete-linux-x86_64.zip         ./steam/steam_appid.txt
           7z a -r ete-windows-msvc-x86.zip     ./steam/steam_appid.txt
           7z a -r ete-windows-msvc-x64.zip     ./steam/steam_appid.txt
           7z a -r ete-macos-x86_64.zip         ./steam/steam_appid.txt
+          7z a -r ete-macos-arm64.zip         ./steam/steam_appid.txt
           mkdir -p etmain
           mv -t  ./etmain/ ./linux-x86/*.so
           mv -t  ./etmain/ ./linux-x86_64/*.so
@@ -283,7 +274,7 @@ jobs:
           7z a -r ete-docs.zip ./docs/*
 
       - name: Create latest build
-        uses: marvinpinto/action-automatic-releases@6273874b61ebc8c71f1a61b2d98e234cf389b303
+        uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           automatic_release_tag: "latest"
