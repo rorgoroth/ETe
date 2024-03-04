@@ -4208,7 +4208,7 @@ void CG_DrawDemoRecording( void ) {
 	if ( cg_waverecording.integer ) {
 		Com_sprintf( wavestatus, sizeof( demostatus ), " audio %s: %ik ", cg_wavefilename.string, cg_waveoffset.integer / 1024 );
 	} else {
-		demostatus[0] = '\0';
+		wavestatus[0] = '\0';
 	}
 
 	Com_sprintf( status, sizeof( status ), "RECORDING%s%s", demostatus, wavestatus );
