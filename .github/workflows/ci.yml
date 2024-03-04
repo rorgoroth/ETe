@@ -161,7 +161,6 @@ jobs:
       fail-fast: false
       matrix:
         runner: [macos-12, macos-14]
-        arch: [x86_64, arm64]
         config: [Release]
         include:
           - runner: macos-12
