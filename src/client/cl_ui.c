@@ -30,8 +30,6 @@ If you have questions concerning this license or the applicable additional terms
 #include "client.h"
 
 vm_t *uivm = NULL;
-static int nestedCmdOffset; // nested command buffer offset
-
 
 /*
 ====================
@@ -1378,7 +1376,6 @@ CL_InitUI
 void CL_InitUI( void ) {
 	int v;
 
-	nestedCmdOffset = 0;
 
 	uivm = VM_Create( VM_UI, CL_UISystemCalls, UI_DllSyscall, VMI_NATIVE );
 	if ( !uivm ) {
@@ -1403,18 +1400,19 @@ void CL_InitUI( void ) {
 	v = VM_Call( uivm, 0, UI_GETAPIVERSION );
 	if ( v != UI_API_VERSION ) {
 		// Free uivm now, so UI_SHUTDOWN doesn't get called later.
-		cls.uiStarted = qfalse;
 		VM_Free( uivm );
 		uivm = NULL;
 
 		Com_Error( ERR_DROP, "User Interface is version %d, expected %d", v, UI_API_VERSION );
+		cls.uiStarted = qfalse;
 	}
-
-	// init for this gamestate
-	if ( currentGameMod == GAMEMOD_LEGACY || currentGameMod == GAMEMOD_ETJUMP )
-		VM_Call( uivm, 3, UI_INIT, ( cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE ), qtrue, com_legacyVersion->integer );
-	else
-		VM_Call( uivm, 1, UI_INIT, ( cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE ) );
+	else {
+		// init for this gamestate
+		if ( currentGameMod == GAMEMOD_LEGACY || currentGameMod == GAMEMOD_ETJUMP )
+			VM_Call( uivm, 3, UI_INIT, ( cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE ), qtrue, com_legacyVersion->integer );
+		else
+			VM_Call( uivm, 1, UI_INIT, ( cls.state >= CA_AUTHORIZING && cls.state < CA_ACTIVE ) );
+	}
 }
 
 
@@ -1442,14 +1440,9 @@ See if the current console command is claimed by the ui
 ====================
 */
 qboolean UI_GameCommand( void ) {
-	qboolean bRes;
 	if ( !uivm ) {
 		return qfalse;
 	}
 
-	bRes = (qboolean)VM_Call( uivm, 1, UI_CONSOLE_COMMAND, cls.realtime );
-
-	nestedCmdOffset = 0;
-
-	return bRes;
+	return VM_Call( uivm, 1, UI_CONSOLE_COMMAND, cls.realtime );
 }
