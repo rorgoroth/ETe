@@ -4633,7 +4633,10 @@ void Com_Frame( qboolean noDelay ) {
 			timeBeforeEvents = Sys_Milliseconds();
 		}
 		Com_EventLoop();
-		Cbuf_Execute();
+
+		if ( !Cbuf_Wait() ) {
+			Cbuf_Execute();
+		}
 
 		//
 		// client side
