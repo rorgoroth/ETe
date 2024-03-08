@@ -135,16 +135,21 @@ jobs:
 
     - name: Configure CMake
       run: |
+        cmake -E make_directory build
         cmake -E make_directory bin
         if [ ${{ matrix.arch }} == "x86" ]; then
-          cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }} -DBUILD_ETMAIN_MOD=ON -DCMAKE_TOOLCHAIN_FILE=../src/cmake/toolchains/linux-i686.cmake
+          cmake -S src -B build -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }} -DBUILD_ETMAIN_MOD=ON -DCMAKE_TOOLCHAIN_FILE=../src/cmake/toolchains/linux-i686.cmake -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/bin
         else
-          cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }} -DBUILD_ETMAIN_MOD=ON
+          cmake -S src -B build -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=${{ matrix.use_sdl }} -DBUILD_ETMAIN_MOD=ON -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/bin
         fi
 
     - name: Build
-      working-directory: bin
+      working-directory: build
       run: cmake --build . --config ${{ matrix.config }} --parallel
+
+    - name: Install
+      working-directory: build
+      run: cmake --install .
 
     - uses: actions/upload-artifact@v4
       if: matrix.config == 'Release'
@@ -180,12 +185,17 @@ jobs:
 
     - name: Configure CMake
       run: |
+        cmake -E make_directory build
         cmake -E make_directory bin
-        cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=TRUE -DBUILD_ETMAIN_MOD=ON -DUSE_SYSTEM_JPEG=OFF
+        cmake -S src -B build -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=TRUE -DBUILD_ETMAIN_MOD=ON -DUSE_SYSTEM_JPEG=OFF -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/bin
 
     - name: Build
-      working-directory: bin
+      working-directory: build
       run: cmake --build . --config ${{ matrix.config }} --parallel
+
+    - name: Install
+      working-directory: build
+      run: cmake --install .
 
     - uses: actions/upload-artifact@v4
       if: matrix.config == 'Release'
