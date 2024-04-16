@@ -41,10 +41,10 @@ static void CL_Callvote_f( void ) {
 }
 
 
-static void CL_CompleteCallvote( const char *args, int argNum ) {
+static void CL_CompleteCallvote( char *args, int argNum ) {
 	if( argNum >= 2 )
 	{
-		const char *p;
+		char *p;
 		if ( argNum == 3 && !Q_stricmp( Cmd_Argv( 1 ), "map" ) ) {
 			if ( cl_connectedToPureServer ) {
 				Field_CompleteFilename( "maps", "bsp", qtrue, FS_MATCH_PK3s | FS_MATCH_STICK );
