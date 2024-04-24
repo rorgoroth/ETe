@@ -1788,8 +1788,8 @@ static void R_Register( void )
 
 #ifdef USE_FBO
 	r_ext_multisample = ri.Cvar_Get( "r_ext_multisample", "0", CVAR_ARCHIVE_ND );
-	ri.Cvar_CheckRange( r_ext_multisample, "0", "8", CV_INTEGER );
-	ri.Cvar_SetDescription( r_ext_multisample, "For anti-aliasing geometry edges, valid values: 0|2|4|6|8. Requires \\r_fbo 1" );
+	ri.Cvar_CheckRange( r_ext_multisample, "0", "16", CV_INTEGER );
+	ri.Cvar_SetDescription( r_ext_multisample, "For anti-aliasing geometry edges, valid values: 0|2|4|6|8|16. Requires \\r_fbo 1" );
 	ri.Cvar_SetGroup( r_ext_multisample, CVG_RENDERER );
 	r_hdr = ri.Cvar_Get( "r_hdr", "0", CVAR_ARCHIVE_ND );
 	ri.Cvar_SetDescription(r_hdr, "Enables high dynamic range frame buffer texture format. Requires \\r_fbo 1.\n -1: 4-bit, for testing purposes, heavy color banding, might not work on all systems\n  0: 8 bit, default, moderate color banding with multi-stage shaders\n  1: 16 bit, enhanced blending precision, no color banding, might decrease performance on AMD / Intel GPUs" );
