@@ -47,6 +47,7 @@ If you have questions concerning this license or the applicable additional terms
 #include <GL/gl.h>
 #include <GL/glx.h>
 #elif defined(__APPLE__)
+#define GL_SILENCE_DEPRECATION
 #include <OpenGL/gl.h>
 #endif
 

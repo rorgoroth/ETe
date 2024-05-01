@@ -65,6 +65,13 @@ void GLimp_Shutdown( qboolean unloadDLL )
 {
 	IN_Shutdown();
 
+	// Destroy existing state if it exists
+	if ( SDL_glContext != NULL )
+	{
+		SDL_GL_DeleteContext( SDL_glContext );
+		SDL_glContext = NULL;
+	}
+
 	SDL_DestroyWindow( SDL_window );
 	SDL_window = NULL;
 
