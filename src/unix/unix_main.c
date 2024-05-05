@@ -832,7 +832,7 @@ void *Sys_LoadGameDll(const char *name, vmMain_t *entryPoint, dllSyscall_t syste
 
 	// Last resort for missing DLLs or media mods
 	// If mod requires a different cgame/ui this could cause problems
-	/*if ( !libHandle && strcmp( gamedir, BASEGAME ) != 0 )
+	if ( !libHandle && !strcmp( name, "ui" ) && strcmp( gamedir, BASEGAME ) != 0 )
 	{
 		const char *temp = va( "%s%c%s", gamedir, PATH_SEP, fname );
 		FS_SetFilterFlag( FS_EXCLUDE_OTHERGAMES );
@@ -845,7 +845,7 @@ void *Sys_LoadGameDll(const char *name, vmMain_t *entryPoint, dllSyscall_t syste
 				libHandle = try_dlopen(SEARCHPATH2, BASEGAME, fname);
 		}
 		FS_SetFilterFlag( 0 );
-	}*/
+	}
 
 	if (!libHandle)
 	{
