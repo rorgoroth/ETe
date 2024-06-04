@@ -174,7 +174,7 @@ jobs:
 
     steps:
     - name: Setup Build Environment
-      run: brew install coreutils ninja pkg-config sdl2
+      run: brew install coreutils ninja sdl2
 
     - uses: actions/checkout@v4
       with:
