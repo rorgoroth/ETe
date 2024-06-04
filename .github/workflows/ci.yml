@@ -22,7 +22,7 @@ on:
 jobs:
   msvc:
     name: Windows ${{ matrix.arch }} ${{ matrix.config }} 
-    runs-on: windows-2022
+    runs-on: windows-2019
     strategy:
       fail-fast: false
       matrix:
@@ -275,7 +275,7 @@ jobs:
           7z a -r ete-docs.zip ./docs/*
 
       - name: Create latest build
-        uses: marvinpinto/action-automatic-releases@latest
+        uses: czietz/action-automatic-releases@latest
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           automatic_release_tag: "latest"
