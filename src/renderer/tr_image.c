@@ -1219,7 +1219,7 @@ image_t	*R_FindImageFile( const char *name, imgFlags_t flags )
 	return image;
 }
 
-#include "renderImage.h"
+#include "../renderercommon/renderImage.h"
 
 static void R_CreateTCRenderImage( void ) {
 	tr.tcRenderImage = R_CreateImage( "*tcRender", NULL, (byte*)tcRenderImage, TCRENDER_SIZE, TCRENDER_SIZE, IMGFLAG_PICMIP );

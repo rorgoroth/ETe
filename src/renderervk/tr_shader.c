@@ -4040,6 +4040,10 @@ shader_t *R_FindShaderByName( const char *name ) {
 
 	hash = generateHashValue(strippedName, FILE_HASH_SIZE);
 
+	if ( tr.tcRenderShader && !tr.tcRenderShader->defaultShader && !Q_stricmp( name, tr.tcRenderShader->name ) ) {
+		return tr.tcRenderShader;
+	}
+
 	//
 	// see if the shader is already loaded
 	//
@@ -4242,6 +4246,10 @@ shader_t *R_FindShader( const char *name, int lightmapIndex, qboolean mipRawImag
 	COM_FixPath( strippedName );
 
 	hash = generateHashValue(strippedName, FILE_HASH_SIZE);
+
+	if ( tr.tcRenderShader && !tr.tcRenderShader->defaultShader && !Q_stricmp( name, tr.tcRenderShader->name ) ) {
+		return tr.tcRenderShader;
+	}
 
 	//
 	// see if the shader is already loaded
@@ -4884,6 +4892,16 @@ static void CreateInternalShaders( void ) {
 	stages[0].bundle[0].rgbGen = CGEN_IDENTITY_LIGHTING;
 	stages[0].stateBits = GLS_DEPTHTEST_DISABLE;
 	tr.cinematicShader = FinishShader();
+
+	InitShader( "<tcRender>", LIGHTMAP_NONE );
+	shader.polygonOffset = qtrue;
+	shader.noPicMip = qtrue;
+	stages[0].bundle[0].image[0] = tr.tcRenderImage;
+	stages[0].active = qtrue;
+	stages[0].bundle[0].rgbGen = CGEN_VERTEX;
+	stages[0].bundle[0].alphaGen = AGEN_VERTEX;
+	stages[0].stateBits = GLS_SRCBLEND_ONE | GLS_DSTBLEND_ONE;
+	tr.tcRenderShader = FinishShader();
 }
 
 
