@@ -1494,6 +1494,7 @@ const char *ClientConnect( int clientNum, qboolean firstTime, qboolean isBot ) {
 		trap_UnlinkEntity( ent );
 		ent->r.contents = 0;
 		ent->s.eType = ET_INVISIBLE;
+		ent->s.solid = 0;
 		ent->s.eFlags = 0;
 		ent->s.modelindex = 0;
 		ent->s.clientNum = clientNum;
@@ -2360,6 +2361,10 @@ void ClientDisconnect( int clientNum ) {
 	G_LogPrintf( "ClientDisconnect: %i\n", clientNum );
 
 	trap_UnlinkEntity( ent );
+	ent->r.contents = 0;
+	ent->s.eType = ET_INVISIBLE;
+	ent->s.solid = 0;
+	ent->s.eFlags = 0;
 	ent->s.modelindex = 0;
 	ent->inuse = qfalse;
 	ent->classname = "disconnected";
@@ -2367,6 +2372,7 @@ void ClientDisconnect( int clientNum ) {
 	ent->client->ps.persistant[PERS_TEAM] = TEAM_FREE;
 	i = ent->client->sess.sessionTeam;
 	ent->client->sess.sessionTeam = TEAM_FREE;
+	ent->takedamage = qfalse;
 	ent->active = qfalse;
 
 	trap_SetConfigstring( CS_PLAYERS + clientNum, "" );
