@@ -389,6 +389,7 @@ static void SV_MapRestart_f( void ) {
 	for ( i = 0; i < GAME_INIT_FRAMES; i++ ) {
 		VM_Call( gvm, GAME_RUN_FRAME, sv.time );
 		sv.time += FRAMETIME;
+		svs.time += FRAMETIME;
 	}
 
 	sv.state = SS_GAME;

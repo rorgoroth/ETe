@@ -703,6 +703,7 @@ void SV_SpawnServer( const char *mapname ) {
 	{
 		VM_Call( gvm, GAME_RUN_FRAME, sv.time );
         sv.time += FRAMETIME;
+		svs.time += FRAMETIME;
 		////SV_BotFrame (sv.time);
 	}
 
