@@ -6470,6 +6470,7 @@ static const gameStrMap_t knownGames[] = {
 	{"tcetest", GAMEMOD_TCETEST},
 	{"cqbtest", GAMEMOD_CQBTEST},
 	{"etnam", GAMEMOD_ETNAM},
+	{"omnibot", GAMEMOD_OMNIBOT},
 };
 
 static const int numKnownGames = (int)ARRAY_LEN(knownGames);

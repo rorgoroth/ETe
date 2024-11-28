@@ -1985,8 +1985,9 @@ typedef enum gameMod_e {
 	GAMEMOD_TCETEST,
 	GAMEMOD_CQBTEST,
 	GAMEMOD_ETNAM,
-	GAMEMOD_DUKE
-	//GAMEMOD_MAX = 512
+	GAMEMOD_DUKE,
+	GAMEMOD_OMNIBOT,
+	//GAMEMOD_COUNT
 } gameMod_t;
 
 typedef enum ossInfoFlag_e {
