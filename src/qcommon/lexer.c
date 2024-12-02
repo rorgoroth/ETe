@@ -49,6 +49,8 @@ static punctuation_t default_punctuations[] =
 	{"<<=",P_LSHIFT_ASSIGN},
 	//
 	{"...",P_PARMS},
+	//C++20 spaceship 3-way comparison operator
+	//{"<=>",P_SPACESHIP},
 	//define merge operator
 	{"##",P_PRECOMPMERGE},
 	//logic operators
@@ -113,9 +115,7 @@ static punctuation_t default_punctuations[] =
 	{"\\",P_BACKSLASH},
 	//precompiler operator
 	{"#",P_PRECOMP},
-#ifdef DOLLAR
 	{"$",P_DOLLAR},
-#endif //DOLLAR
 	{NULL, 0}
 };
 
@@ -487,7 +487,7 @@ static int PS_ReadString( script_t *script, token_t *token, int quote ) {
 			//
 			tmpscript_p = script->script_p;
 			tmpline = script->line;
-			//read unusefull stuff between possible two following strings
+			//read white space between possible two consecutive strings
 			if ( !PS_ReadWhiteSpace( script ) ) {
 				script->script_p = tmpscript_p;
 				script->line = tmpline;
@@ -631,8 +631,6 @@ static int PS_ReadNumber( script_t *script, token_t *token ) {
 	int len = 0, i;
 	int octal, dot;
 	char c;
-//	unsigned long int intvalue = 0;
-//	long double floatvalue = 0;
 
 	token->type = TT_NUMBER;
 	//check for a hexadecimal number
@@ -724,9 +722,7 @@ static int PS_ReadNumber( script_t *script, token_t *token ) {
 		} //end if
 	} //end for
 	token->string[len] = '\0';
-#ifdef NUMBERVALUE
 	NumberValue( token->string, token->subtype, &token->intvalue, &token->floatvalue );
-#endif //NUMBERVALUE
 	if ( !( token->subtype & TT_FLOAT ) ) {
 		token->subtype |= TT_INTEGER;
 	}
@@ -738,7 +734,7 @@ static int PS_ReadNumber( script_t *script, token_t *token ) {
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-int PS_ReadLiteral( script_t *script, token_t *token ) {
+/*int PS_ReadLiteral( script_t *script, token_t *token ) {
 	token->type = TT_LITERAL;
 	//first quote
 	token->string[0] = *script->script_p++;
@@ -778,7 +774,7 @@ int PS_ReadLiteral( script_t *script, token_t *token ) {
 	token->subtype = token->string[1];
 	//
 	return 1;
-} //end of the function PS_ReadLiteral
+}*/ //end of the function PS_ReadLiteral
 //============================================================================
 //
 // Parameter:				-
@@ -824,7 +820,7 @@ int PS_ReadPunctuation( script_t *script, token_t *token ) {
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-int PS_ReadPrimitive( script_t *script, token_t *token ) {
+/*int PS_ReadPrimitive( script_t *script, token_t *token ) {
 	int len;
 
 	len = 0;
@@ -841,7 +837,7 @@ int PS_ReadPrimitive( script_t *script, token_t *token ) {
 	memcpy( &script->token, token, sizeof( token_t ) );
 	//primitive reading successfull
 	return 1;
-} //end of the function PS_ReadPrimitive
+}*/ //end of the function PS_ReadPrimitive
 //============================================================================
 //
 // Parameter:				-
@@ -864,7 +860,7 @@ int PS_ReadToken( script_t *script, token_t *token ) {
 	//start of the white space
 	script->whitespace_p = script->script_p;
 	token->whitespace_p = script->script_p;
-	//read unusefull stuff
+	//read white space before token
 	if ( !PS_ReadWhiteSpace( script ) ) {
 		return 0;
 	}
@@ -897,9 +893,9 @@ int PS_ReadToken( script_t *script, token_t *token ) {
 		}
 	} //end if
 	  //if this is a primitive script
-	else if ( script->flags & SCFL_PRIMITIVE ) {
-		return PS_ReadPrimitive( script, token );
-	} //end else if
+	//else if ( script->flags & SCFL_PRIMITIVE ) {
+	//	return PS_ReadPrimitive( script, token );
+	//} //end else if
 	  //if there is a name
 	else if ( ( *script->script_p >= 'a' && *script->script_p <= 'z' ) ||
 			  ( *script->script_p >= 'A' && *script->script_p <= 'Z' ) ||

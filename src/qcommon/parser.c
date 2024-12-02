@@ -615,10 +615,8 @@ int PC_ExpandBuiltinDefine( source_t *source, token_t *deftoken, define_t *defin
 	case BUILTIN_LINE:
 	{
 		sprintf( token->string, "%d", deftoken->line );
-#ifdef NUMBERVALUE
 		token->intvalue = deftoken->line;
 		token->floatvalue = deftoken->line;
-#endif //NUMBERVALUE
 		token->type = TT_NUMBER;
 		token->subtype = TT_DECIMAL | TT_INTEGER;
 		*firsttoken = token;
@@ -1302,7 +1300,7 @@ int PC_AddGlobalDefine(const char *string)
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
-/*int PC_RemoveGlobalDefine( char *name ) {
+/*int PC_RemoveGlobalDefine( const char *name ) {
 	define_t *define;
 
 	define = PC_FindDefine( globaldefines, name );
@@ -2391,6 +2389,19 @@ int PC_Directive_pragma( source_t *source ) {
 // Returns:					-
 // Changes Globals:		-
 //============================================================================
+int PC_Directive_embed( source_t *source ) {
+	token_t token;
+
+	SourceWarning( source, "#embed directive not supported" );
+	while ( PC_ReadLine( source, &token ) ) ;
+	return qtrue;
+} //end of the function PC_Directive_embed
+//============================================================================
+//
+// Parameter:				-
+// Returns:					-
+// Changes Globals:		-
+//============================================================================
 void UnreadSignToken( source_t *source ) {
 	token_t token;
 
@@ -2479,6 +2490,7 @@ static const directive_t directives[] =
 	{"error", PC_Directive_error},
 	{"warning", PC_Directive_warning},
 	{"pragma", PC_Directive_pragma},
+	{"embed", PC_Directive_embed},
 	{"eval", PC_Directive_eval},
 	{"evalfloat", PC_Directive_evalfloat},
 	{NULL, NULL}
@@ -2533,10 +2545,8 @@ int PC_DollarDirective_evalint( source_t *source ) {
 	sprintf( token.string, "%d", abs( value ) );
 	token.type = TT_NUMBER;
 	token.subtype = TT_INTEGER | TT_LONG | TT_DECIMAL;
-#ifdef NUMBERVALUE
 	token.intvalue = value;
 	token.floatvalue = value;
-#endif //NUMBERVALUE
 	PC_UnreadSourceToken( source, &token );
 	if ( value < 0 ) {
 		UnreadSignToken( source );
@@ -2563,10 +2573,8 @@ int PC_DollarDirective_evalfloat( source_t *source ) {
 	sprintf( token.string, "%1.2f", Q_fabs( value ) );
 	token.type = TT_NUMBER;
 	token.subtype = TT_FLOAT | TT_LONG | TT_DECIMAL;
-#ifdef NUMBERVALUE
 	token.intvalue = (unsigned int) value;
 	token.floatvalue = value;
-#endif //NUMBERVALUE
 	PC_UnreadSourceToken( source, &token );
 	if ( value < 0 ) {
 		UnreadSignToken( source );

@@ -41,13 +41,6 @@ If you have questions concerning this license or the applicable additional terms
 // for QDECL
 #include "q_platform.h"
 
-//undef if binary numbers of the form 0b... or 0B... are not allowed
-#define BINARYNUMBERS
-//undef if not using the token.intvalue and token.floatvalue
-#define NUMBERVALUE
-//use dollar sign also as punctuation
-#define DOLLAR
-
 //maximum token length
 #define MAX_TOKEN                   1024
 
@@ -56,9 +49,6 @@ If you have questions concerning this license or the applicable additional terms
 #define SCFL_NOWARNINGS             0x0002
 #define SCFL_NOSTRINGWHITESPACES    0x0004
 #define SCFL_NOSTRINGESCAPECHARS    0x0008
-#define SCFL_PRIMITIVE              0x0010
-#define SCFL_NOBINARYNUMBERS        0x0020
-#define SCFL_NONUMBERVALUES     0x0040
 
 //token types
 #define TT_STRING                       1           // string
@@ -78,9 +68,7 @@ If you have questions concerning this license or the applicable additional terms
 #define TT_DECIMAL                  0x0008  // decimal number
 #define TT_HEX                          0x0100  // hexadecimal number
 #define TT_OCTAL                        0x0200  // octal number
-#ifdef BINARYNUMBERS
 #define TT_BINARY                       0x0400  // binary number
-#endif //BINARYNUMBERS
 #define TT_FLOAT                        0x0800  // floating point number
 #define TT_INTEGER                  0x1000  // integer number
 #define TT_LONG                     0x2000  // long number
@@ -148,6 +136,7 @@ If you have questions concerning this license or the applicable additional terms
 
 #define P_PRECOMP                       51
 #define P_DOLLAR                        52
+//#define P_LOGIC_SPACESHIP               53
 //name sub type
 //-------------
 //		the length of the name
@@ -165,10 +154,8 @@ typedef struct token_s
 	char string[MAX_TOKEN];         //available token
 	int type;                       //last read token type
 	int subtype;                    //last read token sub type
-#ifdef NUMBERVALUE
 	unsigned int intvalue; //integer value
 	float floatvalue;         //floating point value
-#endif //NUMBERVALUE
 	const char *whitespace_p;             //start of white space before token
 	const char *endwhitespace_p;          //start of white space before token
 	int line;                       //line the token was on
