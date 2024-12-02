@@ -250,7 +250,10 @@ static int GLW_SetMode( int mode, const char *modeFS, qboolean fullscreen, qbool
 	config->isFullscreen = fullscreen;
 	glw_state.isFullscreen = fullscreen;
 
-	Com_Printf( "...setting mode %d:", mode );
+	if ( fullscreen && *modeFS )
+		Com_Printf( "...setting mode %d:", atoi(modeFS) );
+	else
+		Com_Printf( "...setting mode %d:", mode );
 
 	if ( !CL_GetModeInfo( &config->vidWidth, &config->vidHeight, &config->windowAspect, mode, modeFS, glw_state.desktop_width, glw_state.desktop_height, fullscreen ) )
 	{

@@ -1028,7 +1028,11 @@ static rserr_t GLW_SetMode( int mode, const char *modeFS, int colorbits, qboolea
 	//
 	// print out informational messages
 	//
-	Com_Printf( "...setting mode %d:", mode );
+	if ( fullscreen && *modeFS )
+		Com_Printf( "...setting mode %d:", atoi(modeFS) );
+	else
+		Com_Printf( "...setting mode %d:", mode );
+
 	if ( !CL_GetModeInfo( &config->vidWidth, &config->vidHeight, &config->windowAspect,
 		mode, modeFS, glw_state.desktopWidth, glw_state.desktopHeight, cdsFullscreen ) )
 	{
