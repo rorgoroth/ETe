@@ -135,7 +135,7 @@ cvar_t	*r_ext_max_anisotropy;
 cvar_t	*r_ignoreGLErrors;
 //cvar_t	*r_logFile;
 
-cvar_t	*r_stencilbits;
+//cvar_t	*r_stencilbits;
 cvar_t	*r_texturebits;
 
 #ifdef USE_FBO
@@ -418,7 +418,6 @@ static void R_InitExtensions( void )
 		glConfig.maxTextureSize = 0;
 	else if ( glConfig.maxTextureSize > 2048 )
 		glConfig.maxTextureSize = 2048; // ResampleTexture() relies on that maximum
-
 
 	//
 	// chipset specific configuration
@@ -1723,7 +1722,7 @@ static void R_Register( void )
 	ri.Cvar_CheckRange( r_mapGreyScale, "-1", "1", CV_FLOAT );
 	ri.Cvar_SetDescription(r_mapGreyScale, "Desaturate world map textures only, works independently from \\r_greyscale, negative values only desaturate lightmaps");
 
-	r_subdivisions = ri.Cvar_Get( "r_subdivisions", "4", CVAR_ARCHIVE_ND | CVAR_LATCH );
+	r_subdivisions = ri.Cvar_Get( "r_subdivisions", "1", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	ri.Cvar_SetDescription(r_subdivisions, "Distance to subdivide bezier curved surfaces. Higher values mean less subdivision and less geometric complexity");
 
 	r_maxpolys = ri.Cvar_Get( "r_maxpolys", XSTRING( MAX_POLYS ), CVAR_LATCH );
@@ -1930,6 +1929,7 @@ static void R_Register( void )
 	ri.Cvar_CheckRange( r_trisMode, "0", "1", CV_INTEGER );
 	r_trisColor = ri.Cvar_Get( "r_trisColor", "1.0 1.0 1.0 1.0", CVAR_ARCHIVE_ND );
 	R_SetTrisColor();
+	r_trisColor->flags &= ~CVAR_LATCH;  // If we were running renderervk before, we need to remove latch
 	r_trisColor->modified = qfalse;
 	r_showsky = ri.Cvar_Get( "r_showsky", "0", 0 );
 	ri.Cvar_SetDescription( r_showsky, "Forces sky in front of all surfaces" );
@@ -1996,8 +1996,7 @@ static void R_Register( void )
 	r_clampToEdge = ri.Cvar_Get( "r_clampToEdge", "1", CVAR_ARCHIVE_ND | CVAR_LATCH | CVAR_DEVELOPER | CVAR_UNSAFE ); // ydnar: opengl 1.2 GL_CLAMP_TO_EDGE support
 	ri.Cvar_SetDescription( r_clampToEdge, "Allow GL_CLAMP_TO_EDGE instead of GL_CLAMP texture rendering. Requires OpenGL 1.2+.\nAvoids black box lines on skybox on NVIDIA hardware" );
 
-	r_stencilbits = ri.Cvar_Get( "r_stencilbits", "8", CVAR_ARCHIVE_ND | CVAR_LATCH | CVAR_UNSAFE );
-	ri.Cvar_SetDescription( r_stencilbits, "Stencil buffer size, value decreases Z-buffer depth" );
+	//r_stencilbits = ri.Cvar_Get( "r_stencilbits", "8", CVAR_ARCHIVE_ND | CVAR_LATCH | CVAR_UNSAFE );
 	r_ignorehwgamma = ri.Cvar_Get( "r_ignorehwgamma", "0", CVAR_ARCHIVE_ND | CVAR_LATCH );        // ydnar: use hw gamma by default
 	ri.Cvar_CheckRange( r_ignorehwgamma, "0", "1", CV_INTEGER );
 	ri.Cvar_SetDescription( r_ignorehwgamma, "Overrides hardware gamma capabilities" );

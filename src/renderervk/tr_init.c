@@ -119,7 +119,7 @@ cvar_t	*r_ext_max_anisotropy;
 
 cvar_t	*r_ignoreGLErrors;
 
-cvar_t	*r_stencilbits;
+//cvar_t	*r_stencilbits;
 cvar_t	*r_texturebits;
 cvar_t	*r_ext_multisample;
 cvar_t	*r_ext_alpha_to_coverage;
@@ -296,17 +296,17 @@ void FORMAT_PRINTF(1,2) QDECL Com_Printf( const char *fmt, ... )
 #endif
 
 
+#ifndef USE_VULKAN
 /*
 ** R_HaveExtension
 */
-#ifndef USE_VULKAN
 static qboolean R_HaveExtension( const char *ext )
 {
 	const char *ptr = Q_stristr( gl_extensions, ext );
 	if (ptr == NULL)
 		return qfalse;
 	ptr += strlen(ext);
-	return ((*ptr == ' ') || (*ptr == '\0'));  // verify it's complete string.
+	return ((*ptr == ' ') || (*ptr == '\0'));  // verify its complete string.
 }
 
 
@@ -335,13 +335,11 @@ static const char *TruncateGLExtensionsString( const char *extensionsString, int
 
 	return truncatedExtensions;
 }
-#endif
 
 
 /*
 ** R_InitExtensions
 */
-#ifndef USE_VULKAN
 static void R_InitExtensions( void )
 {
 	GLint max_texture_size = 0;
@@ -1788,7 +1786,7 @@ static void R_Register( void )
 	ri.Cvar_CheckRange( r_mapGreyScale, "-1", "1", CV_FLOAT );
 	ri.Cvar_SetDescription(r_mapGreyScale, "Desaturate world map textures only, works independently from \\r_greyscale, negative values only desaturate lightmaps");
 
-	r_subdivisions = ri.Cvar_Get( "r_subdivisions", "4", CVAR_ARCHIVE_ND | CVAR_LATCH );
+	r_subdivisions = ri.Cvar_Get( "r_subdivisions", "1", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	ri.Cvar_SetDescription(r_subdivisions, "Distance to subdivide bezier curved surfaces. Higher values mean less subdivision and less geometric complexity");
 
 	r_maxpolys = ri.Cvar_Get( "r_maxpolys", XSTRING( MAX_POLYS ), CVAR_LATCH );
@@ -2037,9 +2035,7 @@ static void R_Register( void )
 	ri.Cvar_SetDescription( r_ext_max_anisotropy, "Sets maximum anisotropic level for your graphics driver. Requires \\r_ext_texture_filter_anisotropic" );
 
 
-	r_stencilbits = ri.Cvar_Get( "r_stencilbits", "8", CVAR_ARCHIVE_ND | CVAR_LATCH | CVAR_UNSAFE );
-	ri.Cvar_CheckRange( r_stencilbits, "0", "8", CV_INTEGER );
-	ri.Cvar_SetDescription( r_stencilbits, "Stencil buffer size, value decreases Z-buffer depth" );
+	//r_stencilbits = ri.Cvar_Get( "r_stencilbits", "8", CVAR_ARCHIVE_ND | CVAR_LATCH | CVAR_UNSAFE );
 	r_ignorehwgamma = ri.Cvar_Get( "r_ignorehwgamma", "0", CVAR_ARCHIVE_ND | CVAR_LATCH );        // ydnar: use hw gamma by default
 	ri.Cvar_CheckRange( r_ignorehwgamma, "0", "1", CV_INTEGER );
 	ri.Cvar_SetDescription( r_ignorehwgamma, "Overrides hardware gamma capabilities" );
@@ -2071,9 +2067,11 @@ static void R_Register( void )
 	r_ext_supersample = ri.Cvar_Get( "r_ext_supersample", "0", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	ri.Cvar_CheckRange( r_ext_supersample, "0", "1", CV_INTEGER );
 	ri.Cvar_SetDescription( r_ext_supersample, "Super-sample anti-aliasing, requires \\r_fbo 1" );
-
+#if 0
 	r_ext_alpha_to_coverage = ri.Cvar_Get( "r_ext_alpha_to_coverage", "0", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	ri.Cvar_CheckRange( r_ext_alpha_to_coverage, "0", "1", CV_INTEGER );
+	ri.Cvar_SetDescription( r_ext_alpha_to_coverage, "Enables alpha-to-coverage multisampling, requires \\r_fbo 1" );
+#endif
 
 	r_renderWidth = ri.Cvar_Get( "r_renderWidth", "800", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	ri.Cvar_CheckRange( r_renderWidth, "96", NULL, CV_INTEGER );

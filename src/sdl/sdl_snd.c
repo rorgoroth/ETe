@@ -201,6 +201,7 @@ static int SNDDMA_KHzToHz( int khz )
 		default:
 		case 22: return 22050;
 		case 11: return 11025;
+		case  8: return  8000;
 	}
 }
 
@@ -211,6 +212,7 @@ static int SND_SamplesForFreq( int freq, int level )
 
 	switch ( freq )
 	{
+		case  8000: samples = 128; break;
 		case 11025: samples = 256; break;
 		case 22050: samples = 512; break;
 		case 44100: samples = 1024; break;
@@ -253,12 +255,10 @@ qboolean SNDDMA_Init( void )
 	s_sdlLevelSamps = Cvar_Get( "s_sdlLevelSamps", "0", CVAR_ARCHIVE_ND | CVAR_LATCH );
 	Cvar_CheckRange( s_sdlLevelSamps, "0", "2", CV_INTEGER );
 
-#if defined(USE_SDL)
-	if ( s_sdlDriver->string )
+	if ( s_sdlDriver->string[0] != '\0' )
 	{
 		SDL_setenv("SDL_AUDIODRIVER", s_sdlDriver->string, 0);
 	}
-#endif
 
 	Com_Printf( "SDL_Init( SDL_INIT_AUDIO )... " );
 

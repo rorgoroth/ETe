@@ -58,7 +58,7 @@ const int demo_protocols[] = { VERY_OLD_PROTOCOL_VERSION, OLD_PROTOCOL_VERSION, 
 #define DEF_COMZONEMEGS		25
 #endif
 
-#define ETLEGACY_VERSION	281000007
+#define ETLEGACY_VERSION	283010035
 
 static jmp_buf abortframe;	// an ERR_DROP occurred, exit the entire frame
 
@@ -350,7 +350,7 @@ void NORETURN FORMAT_PRINTF(2, 3) QDECL Com_Error( errorParm_t code, const char 
 
 	com_errorEntered = qtrue;
 
-	Cvar_Set( "com_errorCode", va( "%i", code ) );
+	Cvar_SetIntegerValue( "com_errorCode", code );
 
 	// when we are running automated scripts, make sure we
 	// know if anything failed
@@ -526,7 +526,7 @@ static void Com_ParseCommandLine( char *commandLine ) {
 			inq = !inq;
 		}
 		// look for a + separating character
-		// if commandLine came from a file, we might have real line seperators
+		// if commandLine came from a file, we might have real line separators
 		if ( (*commandLine == '+' && !inq) || *commandLine == '\n'  || *commandLine == '\r' ) {
 			if ( com_numConsoleLines == MAX_CONSOLE_LINES ) {
 				break;
@@ -1529,7 +1529,7 @@ void *Z_TagMalloc( int size, memtag_t tag ) {
 
 	do {
 		if ( rover == start ) {
-			// scaned all the way around the list
+			// scanned all the way around the list
 #ifdef ZONE_DEBUG
 			Z_LogHeap();
 			Com_Error( ERR_FATAL, "Z_Malloc: failed on allocation of %i bytes from the %s zone: %s, line: %d (%s)",
@@ -1847,8 +1847,8 @@ typedef struct hunkblock_s {
 	int size;
 	byte printed;
 	struct hunkblock_s *next;
-	char *label;
-	char *file;
+	const char *label;
+	const char *file;
 	int line;
 } hunkblock_t;
 
@@ -2221,7 +2221,7 @@ static void Com_InitHunkMemory( void ) {
 
 	// make sure the file system has allocated and "not" freed any temp blocks
 	// this allows the config and product id files ( journal files too ) to be loaded
-	// by the file system without redunant routines in the file system utilizing different
+	// by the file system without redundant routines in the file system utilizing different
 	// memory systems
 	if ( FS_LoadStack() != 0 ) {
 		Com_Error( ERR_FATAL, "Hunk initialization failed. File system load stack not zero" );
@@ -2463,7 +2463,7 @@ void *Hunk_AllocateTempMemory( int size ) {
 
 	// return a Z_Malloc'd block if the hunk has not been initialized
 	// this allows the config and product id files ( journal files too ) to be loaded
-	// by the file system without redunant routines in the file system utilizing different
+	// by the file system without redundant routines in the file system utilizing different
 	// memory systems
 	if ( s_hunkData == NULL )
 	{
@@ -2515,7 +2515,7 @@ void Hunk_FreeTempMemory( void *buf ) {
 
 	// free with Z_Free if the hunk has not been initialized
 	// this allows the config and product id files ( journal files too ) to be loaded
-	// by the file system without redunant routines in the file system utilizing different
+	// by the file system without redundant routines in the file system utilizing different
 	// memory systems
 	if ( s_hunkData == NULL )
 	{
@@ -3940,6 +3940,9 @@ void Com_Init( char *commandLine ) {
 	// TTimo gcc warning: variable `safeMode' might be clobbered by `longjmp' or `vfork'
 	volatile qboolean safeMode = qtrue;
 
+	// get the initial time base
+	Sys_Milliseconds();
+
 	Com_Printf( "%s %s %s\n", Q3_VERSION, PLATFORM_STRING, __DATE__ ); // GIT/SVN_VERSION?
 
 	if ( Q_setjmp( abortframe ) ) {
@@ -4129,10 +4132,11 @@ void Com_Init( char *commandLine ) {
 	Cvar_SetDescription( com_watchdog_cmd, "Command to execute when \\com_watchdog conditions are met, if set otherwise server process will quit");
 
 #ifndef DEDICATED	
-	com_timedemo = Cvar_Get( "timedemo", "0", CVAR_CHEAT );
+	com_timedemo = Cvar_Get( "timedemo", "0", 0 );
 	Cvar_CheckRange( com_timedemo, "0", "1", CV_INTEGER );
 	Cvar_SetDescription( com_timedemo, "When set to '1' times a demo and returns frames per second like a benchmark" );
 	cl_paused = Cvar_Get( "cl_paused", "0", CVAR_ROM );
+	Cvar_SetDescription( cl_paused, "Can be used to check if the client game is paused" );
 	cl_packetdelay = Cvar_Get( "cl_packetdelay", "0", CVAR_CHEAT );
 	Cvar_SetDescription( cl_packetdelay, "Artificially set the client's latency. Simulates packet delay, which can lead to packet loss" );
 	cl_packetloss = Cvar_Get( "cl_packetloss", "0", CVAR_CHEAT );
@@ -4244,7 +4248,8 @@ void Com_Init( char *commandLine ) {
 	// set com_frameTime so that if a map is started on the
 	// command line it will still be able to count on com_frameTime
 	// being random enough for a serverid
-	lastTime = com_frameTime = Com_Milliseconds();
+	// lastTime = com_frameTime = Com_Milliseconds();
+	Com_FrameInit();
 
 	if ( !com_errorEntered )
 		Sys_ShowConsole( com_viewlog->integer, qfalse );
@@ -4264,6 +4269,10 @@ void Com_Init( char *commandLine ) {
 	com_fullyInitialized = qtrue;
 
 	Com_Printf( "--- Common Initialization Complete ---\n" );
+
+	NET_Init();
+
+	Com_Printf( "Working directory: %s\n", Sys_Pwd() );
 }
 
 
@@ -4446,6 +4455,15 @@ static int Com_TimeVal( int minMsec )
 	return timeVal;
 }
 
+/*
+=================
+Com_FrameInit
+=================
+*/
+void Com_FrameInit( void )
+{
+	lastTime = com_frameTime = Com_Milliseconds();
+}
 
 /*
 =================
@@ -4634,9 +4652,7 @@ void Com_Frame( qboolean noDelay ) {
 		}
 		Com_EventLoop();
 
-		if ( !Cbuf_Wait() ) {
-			Cbuf_Execute();
-		}
+		Cbuf_Execute();
 
 		//
 		// client side
@@ -4654,6 +4670,8 @@ void Com_Frame( qboolean noDelay ) {
 #endif
 
 	NET_FlushPacketQueue();
+
+	Cbuf_Wait();
 
 	//
 	// watchdog

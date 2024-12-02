@@ -469,6 +469,7 @@ static qboolean setup_ALSA( smode_t mode )
 		case 48: speed = 48000; break;
 		case 44: speed = 44100; break;
 		case 11: speed = 11025; break;
+		case  8: speed =  8000; break;
 		case 22:
 		default: speed = 22050; break;
 	};
@@ -757,10 +758,13 @@ static int xrun_recovery( snd_pcm_t *handle, int err )
 	else if ( err == -ESTRPIPE )
 	{
 		int tries = 0;
+		struct timespec req;
+		req.tv_sec = period_time / 1000000;
+		req.tv_nsec = ( period_time % 1000000 ) * 1000;
 		/* wait until the suspend flag is released */
 		while ( ( err = _snd_pcm_resume( handle ) ) == -EAGAIN )
 		{
-			usleep( period_time );
+			nanosleep( &req, NULL );
 			if ( tries++ < 16 )
 			{
 				break;
@@ -1160,6 +1164,7 @@ static int SNDDMA_KHzToHz( int khz )
 		default:
 		case 22: return 22050;
 		case 11: return 11025;
+		case  8: return 8000;
 	}
 }
 

@@ -280,7 +280,11 @@ static int GLW_SetMode( int mode, const char *modeFS, qboolean fullscreen, qbool
 
 	if ( fullscreen )
 	{
+#ifdef MACOS_X
+		flags |= SDL_WINDOW_FULLSCREEN_DESKTOP;
+#else
 		flags |= SDL_WINDOW_FULLSCREEN;
+#endif
 	}
 	else if ( r_noborder->integer )
 	{
@@ -334,13 +338,9 @@ static int GLW_SetMode( int mode, const char *modeFS, qboolean fullscreen, qbool
 				case 1 :
 					if (depthBits == 24)
 						depthBits = 16;
-					else if (depthBits == 16)
-						depthBits = 8;
 				case 3 :
-					if (stencilBits == 24)
-						stencilBits = 16;
-					else if (stencilBits == 16)
-						stencilBits = 8;
+					if (stencilBits == 8)
+						stencilBits = 0;
 			}
 		}
 
@@ -358,17 +358,11 @@ static int GLW_SetMode( int mode, const char *modeFS, qboolean fullscreen, qbool
 		{ // reduce depthBits
 			if (testDepthBits == 24)
 				testDepthBits = 16;
-			else if (testDepthBits == 16)
-				testDepthBits = 8;
 		}
 
 		if ((i % 4) == 1)
 		{ // reduce stencilBits
-			if (testStencilBits == 24)
-				testStencilBits = 16;
-			else if (testStencilBits == 16)
-				testStencilBits = 8;
-			else
+			if (testStencilBits == 8)
 				testStencilBits = 0;
 		}
 
@@ -762,7 +756,7 @@ void VKimp_Init( glconfig_t *config )
 		Com_Error( ERR_VID_FATAL, "VKimp_Init: qvkGetInstanceProcAddr is NULL" );
 	}
 
-	// This values force the UI to disable driver selection
+	// These values force the UI to disable driver selection
 	config->driverType = GLDRV_ICD;
 	config->hardwareType = GLHW_GENERIC;
 

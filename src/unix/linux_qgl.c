@@ -64,6 +64,7 @@ void QGL_Shutdown( qboolean unloadDLL )
 
 	if ( glw_state.OpenGLLib && unloadDLL )
 	{
+		struct timespec req;
 		Com_Printf( "...unloading OpenGL DLL\n" );
 		// 25/09/05 Tim Angus <tim@ngus.net>
 		// Certain combinations of hardware and software, specifically
@@ -82,7 +83,9 @@ void QGL_Shutdown( qboolean unloadDLL )
 		// huh?), and it defaults to 0. For me, 500 seems to work.
 		//if( r_GLlibCoolDownMsec->integer )
 		//	usleep( r_GLlibCoolDownMsec->integer * 1000 );
-		usleep( 250 * 1000 );
+		req.tv_sec = 0;
+		req.tv_nsec = 250 * 1000000;
+		nanosleep( &req, NULL );
 
 		dlclose( glw_state.OpenGLLib );
 

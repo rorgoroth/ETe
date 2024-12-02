@@ -581,7 +581,7 @@ void ProjectPointOnPlane( vec3_t dst, const vec3_t p, const vec3_t normal )
 	float inv_denom;
 
 	inv_denom =  DotProduct( normal, normal );
-	assert( Q_fabs(inv_denom) != 0.0f ); // zero vectors get here
+	//assert( Q_fabs(inv_denom) != 0.0f ); // zero vectors get here
 	inv_denom = 1.0f / inv_denom;
 
 	d = DotProduct( normal, p ) * inv_denom;

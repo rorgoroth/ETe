@@ -442,6 +442,7 @@ static qboolean SNDDMA_InitWASAPI( void )
 		case 48: dma.speed = 48000; break;
 		case 44: dma.speed = 44100; break;
 		case 11: dma.speed = 11025; break;
+		case 8:  dma.speed = 8000;  break;
 		case 22:
 		default: dma.speed = 22050; break;
 	};
@@ -887,6 +888,7 @@ static qboolean SNDDMA_InitDS( void )
 		case 48: dma.speed = 48000; break;
 		case 44: dma.speed = 44100; break;
 		case 11: dma.speed = 11025; break;
+		case 8:  dma.speed = 8000;  break;
 		case 22:
 		default: dma.speed = 22050; break;
 	};

@@ -396,7 +396,7 @@ struct shaderCommands_s;
 typedef enum {
 	FP_NONE,		// surface is translucent and will just be adjusted properly
 	FP_EQUAL,		// surface is opaque but possibly alpha tested
-	FP_LE			// surface is trnaslucent, but still needs a fog pass (fog surface)
+	FP_LE			// surface is translucent, but still needs a fog pass (fog surface)
 } fogPass_t;
 
 typedef struct {
@@ -1586,7 +1586,7 @@ extern cvar_t	*r_bloom_threshold;
 extern cvar_t	*r_bloom_intensity;
 extern cvar_t	*r_bloom_threshold_mode;
 extern cvar_t	*r_bloom_modulate;
-extern cvar_t	*r_ext_alpha_to_coverage;
+//extern cvar_t	*r_ext_alpha_to_coverage;
 extern cvar_t	*r_renderWidth;
 extern cvar_t	*r_renderHeight;
 extern cvar_t	*r_renderScale;

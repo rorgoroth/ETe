@@ -28,15 +28,14 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 #include "../qcommon/q_shared.h"
 
-void Sys_GetSDLVersion(uint8_t *minor, uint8_t *major, uint8_t *patch) {
+void Sys_GetSDLVersion(uint32_t *major, uint32_t *minor, uint32_t *patch) {
 	SDL_version ver;
-
 	if( !minor || !major || !patch )
 		return;
 
 	SDL_GetVersion( &ver );
 
-	*minor = ver.minor;
-	*major = ver.major;
-	*patch = ver.patch;
+	*major = (uint32_t)ver.major;
+	*minor = (uint32_t)ver.minor;
+	*patch = (uint32_t)ver.patch;
 }

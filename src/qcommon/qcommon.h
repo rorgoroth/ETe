@@ -141,7 +141,9 @@ NET
 
 ==============================================================
 */
+#ifndef DISABLE_IPV6
 #define USE_IPV6
+#endif
 
 #define NET_ENABLEV4            0x01
 #define NET_ENABLEV6            0x02
@@ -512,7 +514,7 @@ void Cbuf_Execute( void );
 // Normally called once per frame, but may be explicitly invoked.
 // Do not call inside a command function, or current args will be destroyed.
 
-qboolean Cbuf_Wait( void );
+void Cbuf_Wait( void );
 // Checks if wait command timeout remaining
 
 //===========================================================================
@@ -941,9 +943,7 @@ void FS_VM_CloseFiles( handleOwner_t owner );
 const char *FS_GetCurrentGameDir( void );
 const char *FS_GetBaseGameDir( void );
 
-const char *FS_GetBasePath( void );
 const char *FS_GetHomePath( void );
-const char *FS_GetGamePath( void );
 
 qboolean FS_StripExt( char *filename, const char *ext );
 qboolean FS_AllowedExtension( const char *fileName, qboolean allowPk3s, const char **ext );
@@ -1298,6 +1298,7 @@ void Com_TouchMemory( void );
 
 // commandLine should not include the executable name (argv[0])
 void Com_Init( char *commandLine );
+void Com_FrameInit( void );
 void Com_Frame( qboolean noDelay );
 
 /*

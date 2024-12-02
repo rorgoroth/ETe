@@ -500,7 +500,8 @@ Compare without port, and up to the bit number given in netmask.
 */
 qboolean NET_CompareBaseAdrMask( const netadr_t *a, const netadr_t *b, unsigned int netmask )
 {
-	byte cmpmask, *addra, *addrb;
+	byte cmpmask;
+	const byte *addra, *addrb;
 	int curbyte;
 
 	if (a->type != b->type)
@@ -511,8 +512,8 @@ qboolean NET_CompareBaseAdrMask( const netadr_t *a, const netadr_t *b, unsigned 
 
 	if (a->type == NA_IP)
 	{
-		addra = (byte *) &a->ipv._4;
-		addrb = (byte *) &b->ipv._4;
+		addra = (const byte *) &a->ipv._4;
+		addrb = (const byte *) &b->ipv._4;
 		
 		if (netmask > 32)
 			netmask = 32;
@@ -520,8 +521,8 @@ qboolean NET_CompareBaseAdrMask( const netadr_t *a, const netadr_t *b, unsigned 
 #ifdef USE_IPV6
 	else if (a->type == NA_IP6)
 	{
-		addra = (byte *) &a->ipv._6;
-		addrb = (byte *) &b->ipv._6;
+		addra = (const byte *) &a->ipv._6;
+		addrb = (const byte *) &b->ipv._6;
 		
 		if (netmask > 128)
 			netmask = 128;
@@ -1901,7 +1902,10 @@ qboolean NET_Sleep( int timeout )
 		Sleep( timeout / 1000 );
 		return qtrue;
 #else
-		usleep( timeout );
+		struct timespec req;
+		req.tv_sec = timeout / 1000000;
+		req.tv_nsec = ( timeout % 1000000 ) * 1000;
+		nanosleep( &req, NULL );
 		return qtrue;
 #endif
 	}

@@ -614,6 +614,7 @@ Block execution for msec or until input is received.
 void Sys_Sleep(int msec)
 {
 	struct timeval timeout;
+	struct timespec req;
 	fd_set fdset;
 	int res;
 
@@ -646,7 +647,9 @@ void Sys_Sleep(int msec)
 		return;
 	}
 #if 1
-	usleep( msec * 1000 );
+	req.tv_sec = msec / 1000;
+	req.tv_nsec = ( msec % 1000 ) * 1000000;
+	nanosleep( &req, NULL );
 #else
 	if (com_dedicated->integer && stdin_active)
 	{
@@ -1279,7 +1282,7 @@ int Sys_ParseArgs(int argc, const char *argv[])
 }
 
 #if USE_SDL && !defined(DEDICATED)
-void Sys_GetSDLVersion(uint8_t *minor, uint8_t *major, uint8_t *patch);
+void Sys_GetSDLVersion(uint32_t *major, uint32_t *minor, uint32_t *patch);
 #endif
 int main(int argc, const char *argv[])
 {
@@ -1290,8 +1293,8 @@ int main(int argc, const char *argv[])
 	int len, i;
 	tty_err err;
 #if USE_SDL && !defined(DEDICATED)
-	uint8_t minor, major, patch;
-	Sys_GetSDLVersion(&minor, &major, &patch);
+	uint32_t major, minor, patch;
+	Sys_GetSDLVersion(&major, &minor, &patch);
 #endif
 
 #ifdef __APPLE__
@@ -1322,16 +1325,10 @@ int main(int argc, const char *argv[])
 	//	memset( &eventQue[0], 0, sizeof( eventQue ) );
 	//	memset( &sys_packetReceived[0], 0, sizeof( sys_packetReceived ) );
 
-	// get the initial time base
-	Sys_Milliseconds();
-
-	Com_Init(cmdline);
-	NET_Init();
-
-	Com_Printf("Working directory: %s\n", Sys_Pwd());
+	Com_Init( cmdline );
 
 #if USE_SDL && !defined(DEDICATED)
-	Com_Printf("Using SDL Version %u.%u.%u\n", (uint32_t)major, (uint32_t)minor, (uint32_t)patch);
+	Com_Printf("Using SDL Version %u.%u.%u\n", major, minor, patch);
 #endif
 
 	// Sys_ConsoleInputInit() might be called in signal handler
@@ -1368,12 +1365,12 @@ int main(int argc, const char *argv[])
 
 #ifdef DEDICATED
 		// run the game
-		Com_Frame(qfalse);
+		Com_Frame( qfalse );
 #else
 		// check for other input devices
 		IN_Frame();
 		// run the game
-		Com_Frame(CL_NoDelay());
+		Com_Frame( CL_NoDelay() );
 #endif
 	}
 	// never gets here
