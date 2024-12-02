@@ -20,11 +20,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#ifdef USE_LOCAL_HEADERS
-#	include "SDL.h"
-#else
-#	include <SDL.h>
-#endif
+#include "sdl_local.h"
 
 #include "../client/client.h"
 #include "sdl_glw.h"
@@ -224,10 +220,10 @@ static qboolean IN_IsConsoleKey( keyNum_t key, int character )
 
 /*
 ===============
-IN_TranslateSDLToQ3Key
+IN_TranslateSDLToETKey
 ===============
 */
-static keyNum_t IN_TranslateSDLToQ3Key( SDL_Keysym *keysym, qboolean down )
+static keyNum_t IN_TranslateSDLToETKey( SDL_Keysym *keysym, qboolean down )
 {
 	keyNum_t key = 0;
 
@@ -1150,7 +1146,7 @@ void HandleEvents( void )
 			case SDL_KEYDOWN:
 				if ( e.key.repeat && Key_GetCatcher() == 0 )
 					break;
-				key = IN_TranslateSDLToQ3Key( &e.key.keysym, qtrue );
+				key = IN_TranslateSDLToETKey( &e.key.keysym, qtrue );
 
 				if ( key == K_ENTER && keys[K_ALT].down ) {
 					Cvar_SetIntegerValue( "r_fullscreen", glw_state.isFullscreen ? 0 : 1 );
@@ -1173,7 +1169,7 @@ void HandleEvents( void )
 				break;
 
 			case SDL_KEYUP:
-				if( ( key = IN_TranslateSDLToQ3Key( &e.key.keysym, qfalse ) ) )
+				if( ( key = IN_TranslateSDLToETKey( &e.key.keysym, qfalse ) ) )
 					Com_QueueEvent( in_eventTime, SE_KEY, key, qfalse, 0, NULL );
 
 				lastKeyDown = 0;

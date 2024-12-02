@@ -20,14 +20,10 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 ===========================================================================
 */
 
-#ifndef __GLW_LINUX_H__
-#define __GLW_LINUX_H__
+#ifndef __SDL_GLW_H__
+#define __SDL_GLW_H__
 
-#ifdef USE_LOCAL_HEADERS
-#	include "SDL.h"
-#else
-#	include <SDL.h>
-#endif
+#include "sdl_local.h"
 
 //#define USE_JOYSTICK
 
