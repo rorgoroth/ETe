@@ -1028,7 +1028,7 @@ static rserr_t GLW_SetMode( int mode, const char *modeFS, int colorbits, qboolea
 	//
 	// print out informational messages
 	//
-	if ( fullscreen && *modeFS )
+	if ( cdsFullscreen && *modeFS )
 		Com_Printf( "...setting mode %d:", atoi(modeFS) );
 	else
 		Com_Printf( "...setting mode %d:", mode );
