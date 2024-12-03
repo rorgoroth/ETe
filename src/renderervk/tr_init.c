@@ -1648,25 +1648,24 @@ static void GfxInfo_f( void )
 	VarInfo();
 }
 
-static const char *textureModes[] = {
-	"GL_NEAREST",
-	"GL_LINEAR",
-	"GL_NEAREST_MIPMAP_NEAREST",
-	"GL_LINEAR_MIPMAP_NEAREST",
-	"GL_NEAREST_MIPMAP_LINEAR",
-	"GL_LINEAR_MIPMAP_LINEAR",
+static const char *textureModes[][2] = {
+	{"GL_NEAREST", "Nearest neighbor interpolation and will therefore appear similar to Quake II except with the added colored lighting"},
+	{"GL_LINEAR", "Linear interpolation and will appear to blend in objects that are closer than the resolution that the textures are set as"},
+	{"GL_NEAREST_MIPMAP_NEAREST", "Nearest neighbor interpolation with mipmapping for bilinear hardware, mipmapping will blend objects that are farther away than the resolution that they are set as"},
+	{"GL_LINEAR_MIPMAP_NEAREST", "Linear interpolation with mipmapping for bilinear hardware"},
+	{"GL_NEAREST_MIPMAP_LINEAR", "Nearest neighbor interpolation with mipmapping for trilinear hardware"},
+	{"GL_LINEAR_MIPMAP_LINEAR", "Linear interpolation with mipmapping for trilinear hardware"}
 };
-
 
 static void TexModeList_f( void ) {
 	int i;
-	ri.Printf( PRINT_ALL, "Available r_textureMode options:\n" );
+	ri.Printf( PRINT_ALL, "Available Texture interpolation (r_textureMode) options:\n" );
 	for( i = 0; i < ARRAY_LEN(textureModes); i++ ) {
-		if ( !Q_stricmp( textureModes[i], r_textureMode->string ) ) {
-			ri.Printf( PRINT_ALL, "%s " S_COLOR_CYAN "[CURRENT]\n", textureModes[i] );
+		if ( !Q_stricmp( textureModes[i][0], r_textureMode->string ) ) {
+			ri.Printf( PRINT_ALL, S_COLOR_CYAN "**%s**" S_COLOR_WHITE " - %s\n", textureModes[i][0], textureModes[i][1] );
 		}
 		else {
-			ri.Printf( PRINT_ALL, "%s\n", textureModes[i] );
+			ri.Printf( PRINT_ALL, "%s - %s\n", textureModes[i][0], textureModes[i][1] );
 		}
 	}
 }
