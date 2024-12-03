@@ -1097,7 +1097,6 @@ void		Info_Print( const char *s );
 
 void		Com_BeginRedirect (char *buffer, int buffersize, void (*flush)(const char *));
 void		Com_EndRedirect( void );
-int			QDECL Com_VPrintf( const char *fmt, va_list argptr ) FORMAT_PRINTF(1, 0); // conforms to vprintf prototype for print callback passing
 void 		QDECL Com_Printf( const char *fmt, ... ) FORMAT_PRINTF(1, 2);
 void 		QDECL Com_DPrintf( const char *fmt, ... ) FORMAT_PRINTF(1, 2);
 void 		NORETURN QDECL Com_Error( errorParm_t code, const char *fmt, ... ) FORMAT_PRINTF(2, 3);
