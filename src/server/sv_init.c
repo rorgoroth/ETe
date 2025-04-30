@@ -546,6 +546,7 @@ void SV_SpawnServer( const char *mapname ) {
 	int			checksum;
 	qboolean	isBot;
 	const char	*p, *pnames;
+	char		bspname[MAX_QPATH];
 
 	// ydnar: broadcast a level change to all connected clients
 	if ( svs.clients && !com_errorEntered ) {
@@ -557,6 +558,8 @@ void SV_SpawnServer( const char *mapname ) {
 
 	Com_Printf( "------ Server Initialization ------\n" );
 	Com_Printf( "Server: %s\n", mapname );
+
+	Com_sprintf( bspname, sizeof(bspname), "maps/%s.bsp", mapname );
 
 	Sys_SetStatus( "Initializing server..." );
 
@@ -647,7 +650,7 @@ void SV_SpawnServer( const char *mapname ) {
 	// DHM - Nerve :: We want to use the completion bar in multiplayer as well
 	// Arnout: just always use it
 //	if( !SV_GameIsSinglePlayer() ) {
-	SV_SetExpectedHunkUsage( va( "maps/%s.bsp", mapname ) );
+	SV_SetExpectedHunkUsage( bspname );
 //	} else {
 	// just set it to a negative number,so the cgame knows not to draw the percent bar
 //		Cvar_Set( "com_expectedhunkusage", "-1" );
@@ -667,7 +670,7 @@ void SV_SpawnServer( const char *mapname ) {
 	FS_Restart( sv.checksumFeed );
 
 	Sys_SetStatus( "Loading map %s", mapname );
-	CM_LoadMap( va( "maps/%s.bsp", mapname ), qfalse, &checksum );
+	CM_LoadMap( bspname, qfalse, &checksum );
 
 	// set serverinfo visible name
 	Cvar_Set( "mapname", mapname );
