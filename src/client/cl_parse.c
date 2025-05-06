@@ -929,11 +929,11 @@ A download message has been received from the server
 =====================
 */
 static void CL_ParseDownload( msg_t *msg ) {
-	int		size;
+	int		size, dummy;
 	unsigned char data[ MAX_MSGLEN ];
 	uint16_t block;
 
-	if (!*clc.downloadTempName) {
+	if (!*cls.downloadTempName) {
 		Com_Printf("Server sending download, but no download was requested\n");
 		CL_AddReliableCommand( "stopdl", qfalse );
 		return;
@@ -944,11 +944,12 @@ static void CL_ParseDownload( msg_t *msg ) {
 	}
 
 	// read the data
-	block = MSG_ReadShort ( msg );
+	dummy = MSG_ReadShort ( msg );
+	block = (uint16_t)dummy;
 
 	// TTimo - www dl
 	// if we haven't acked the download redirect yet
-	if ( block == UINT16_MAX ) {
+	if ( dummy == -1 ) {
 		if ( !clc.bWWWDl ) {
 			// server is sending us a www download
 			Q_strncpyz( cls.originalDownloadName, cls.downloadName, sizeof( cls.originalDownloadName ) );
@@ -1037,17 +1038,17 @@ static void CL_ParseDownload( msg_t *msg ) {
 	{
 		if ( !CL_ValidPakSignature( data, size ) )
 		{
-			Com_Printf( S_COLOR_YELLOW "Invalid pak signature for %s\n", clc.downloadName );
+			Com_Printf( S_COLOR_YELLOW "Invalid pak signature for %s\n", cls.downloadName );
 			CL_AddReliableCommand( "stopdl", qfalse );
 			CL_NextDownload();
 			return;
 		}
 
-		clc.download = FS_SV_FOpenFileWrite( clc.downloadTempName );
+		clc.download = FS_SV_FOpenFileWrite( cls.downloadTempName );
 
 		if ( clc.download == FS_INVALID_HANDLE )
 		{
-			Com_Printf( "Could not create %s\n", clc.downloadTempName );
+			Com_Printf( "Could not create %s\n", cls.downloadTempName );
 			CL_AddReliableCommand( "stopdl", qfalse );
 			CL_NextDownload();
 			return;
@@ -1065,13 +1066,13 @@ static void CL_ParseDownload( msg_t *msg ) {
 	// So UI gets access to it
 	Cvar_SetIntegerValue( "cl_downloadCount", clc.downloadCount );
 
-	if (!size) { // A zero length block means EOF
+	if ( size == 0 ) { // A zero length block means EOF
 		if ( clc.download != FS_INVALID_HANDLE ) {
 			FS_FCloseFile( clc.download );
 			clc.download = FS_INVALID_HANDLE;
 
 			// rename the file
-			FS_SV_Rename( clc.downloadTempName, clc.downloadName );
+			FS_SV_Rename( cls.downloadTempName, cls.downloadName );
 		}
 		*cls.downloadTempName = *cls.downloadName = '\0';
 		Cvar_Set( "cl_downloadName", "" );

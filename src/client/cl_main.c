@@ -1401,7 +1401,7 @@ qboolean CL_Disconnect( qboolean showMainMenu ) {
 			FS_FCloseFile( clc.download );
 			clc.download = FS_INVALID_HANDLE;
 		}
-		*clc.downloadTempName = *clc.downloadName = '\0';
+		*cls.downloadTempName = *cls.downloadName = '\0';
 		Cvar_Set( "cl_downloadName", "" );
 	}
 
@@ -2208,9 +2208,7 @@ static void CL_BeginDownload( const char *localName, const char *remoteName ) {
 				"Remotename: %s\n"
 				"****************************\n", localName, remoteName);
 
-	Q_strncpyz ( clc.downloadName, localName, sizeof(clc.downloadName) );
 	Q_strncpyz ( cls.downloadName, localName, sizeof(cls.downloadName) );
-	Com_sprintf( clc.downloadTempName, sizeof(clc.downloadTempName), "%s.tmp", localName );
 	Com_sprintf( cls.downloadTempName, sizeof(cls.downloadTempName), "%s.tmp", localName );
 
 	// Set so UI gets access to it
@@ -2239,15 +2237,15 @@ void CL_NextDownload( void )
 	char *remoteName, *localName;
 
 	// A download has finished, check whether this matches a referenced checksum
-	if(*clc.downloadName)
+	if(*cls.downloadName)
 	{
-		const char *zippath = FS_BuildOSPath(Cvar_VariableString("fs_homepath"), clc.downloadName, NULL );
+		const char *zippath = FS_BuildOSPath(Cvar_VariableString("fs_homepath"), cls.downloadName, NULL );
 
 		if(!FS_CompareZipChecksum(zippath))
-			Com_Error(ERR_DROP, "Incorrect checksum for file: %s", clc.downloadName);
+			Com_Error(ERR_DROP, "Incorrect checksum for file: %s", cls.downloadName);
 	}
 
-	*clc.downloadTempName = *clc.downloadName = '\0';
+	*cls.downloadTempName = *cls.downloadName = '\0';
 	Cvar_Set("cl_downloadName", "");
 
 	// We are looking to start a download here
@@ -2330,7 +2328,7 @@ void CL_InitDownloads( void ) {
 			// if autodownloading is not enabled on the server
 			cls.state = CA_CONNECTED;
 
-			*clc.downloadTempName = *clc.downloadName = '\0';
+			*cls.downloadTempName = *cls.downloadName = '\0';
 			Cvar_Set( "cl_downloadName", "" );
 
 			CL_NextDownload();
@@ -2340,7 +2338,7 @@ void CL_InitDownloads( void ) {
 	}
 
 #ifdef USE_CURL
-	if ( cl_mapAutoDownload->integer && ( clc.demoplaying || (clc.download == FS_INVALID_HANDLE && !*clc.downloadName) ) )
+	if ( cl_mapAutoDownload->integer && ( clc.demoplaying || (clc.download == FS_INVALID_HANDLE && !*cls.downloadName) ) )
 	{
 		const char *info, *mapname, *bsp;
 
@@ -3254,8 +3252,8 @@ void CL_WWWDownload( void ) {
 				// just to be safe
 				Com_Printf( "ERROR: redirectedList overflow (%s)\n", clc.redirectedList );
 			} else {
-				strcat( clc.redirectedList, "@" );
-				strcat( clc.redirectedList, cls.originalDownloadName );
+				Q_strcat( clc.redirectedList, sizeof( clc.redirectedList), "@" );
+				Q_strcat( clc.redirectedList, sizeof( clc.redirectedList), cls.originalDownloadName );
 			}
 		}
 	} else
@@ -3299,8 +3297,8 @@ qboolean CL_WWWBadChecksum( const char *pakname ) {
 			Com_Printf( "ERROR: badChecksumList overflowed (%s)\n", clc.badChecksumList );
 			return qfalse;
 		}
-		strcat( clc.badChecksumList, "@" );
-		strcat( clc.badChecksumList, pakname );
+		Q_strcat( clc.badChecksumList, sizeof(clc.badChecksumList), "@" );
+		Q_strcat( clc.badChecksumList, sizeof(clc.badChecksumList), pakname );
 		Com_DPrintf( "bad checksums: %s\n", clc.badChecksumList );
 		return qtrue;
 	}

@@ -258,8 +258,6 @@ typedef struct {
 
 	// file transfer from server
 	fileHandle_t download;
-	char		downloadName[MAX_OSPATH];
-	char		downloadTempName[MAX_OSPATH + 4]; // downloadName + ".tmp"
 	int downloadNumber;
 	int downloadBlock;          // block we are waiting for
 	int downloadCount;          // how many bytes we got
@@ -270,8 +268,8 @@ typedef struct {
 	// www downloading
 	qboolean bWWWDl;    // we have a www download going
 	qboolean bWWWDlAborting;    // disable the CL_WWWDownload until server gets us a gamestate (used for aborts)
-	char redirectedList[MAX_INFO_STRING];        // list of files that we downloaded through a redirect since last FS_ComparePaks
-	char badChecksumList[MAX_INFO_STRING];        // list of files for which wwwdl redirect is broken (wrong checksum)
+	char redirectedList[BIG_INFO_STRING];        // list of files that we downloaded through a redirect since last FS_ComparePaks
+	char badChecksumList[BIG_INFO_STRING];        // list of files for which wwwdl redirect is broken (wrong checksum)
 
 	// demo information
 	char		demoName[MAX_OSPATH];
