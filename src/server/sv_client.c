@@ -2153,6 +2153,8 @@ Also called by bot code
 qboolean SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean premaprestart ) {
 	const ucmd_t *ucmd;
 	qboolean bFloodProtect;
+	qboolean isBot;
+	qboolean isCallvote = qfalse;
 
 	Cmd_TokenizeString( s );
 
@@ -2164,7 +2166,8 @@ qboolean SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean premapre
 
 	// We don't do this when the client hasn't been active yet since it's
 	// normal to spam a lot of commands when downloading
-	bFloodProtect = cl->netchan.remoteAddress.type != NA_BOT && cl->state >= CS_ACTIVE;
+	isBot = cl->netchan.remoteAddress.type == NA_BOT ? qtrue: qfalse;
+	bFloodProtect = !isBot && cl->state >= CS_ACTIVE;
 
 	// see if it is a server level command
 	for ( ucmd = ucmds; ucmd->name; ucmd++ ) {
@@ -2197,6 +2200,10 @@ qboolean SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean premapre
 		bFloodProtect = qfalse;
 	}
 
+	if( !Q_stricmpn( "callvote", s, 8 ) ) {
+		isCallvote = qtrue;
+	}
+
 #ifndef DEDICATED
 	if ( !com_cl_running->integer && bFloodProtect && SV_FloodProtect( cl ) ) {
 #else
@@ -2209,9 +2216,9 @@ qboolean SV_ExecuteClientCommand( client_t *cl, const char *s, qboolean premapre
 		if ( !ucmd->name && sv.state == SS_GAME && cl->state >= CS_PRIMED ) {
 			if ( sv_filterCommands->integer > 0 ) {
 				if ( sv_filterCommands->integer >= 2 )
-					Cmd_Args_Sanitize( "\n\r;", qtrue );
+					Cmd_Args_Sanitize( "\n\r;", isCallvote );
 				else
-					Cmd_Args_Sanitize( "\n\r", qtrue );
+					Cmd_Args_Sanitize( "\n\r", isCallvote );
 			}
 			VM_Call( gvm, GAME_CLIENT_COMMAND, cl - svs.clients );
 		}
