@@ -748,7 +748,7 @@ qboolean FS_AllowedExtension( const char *fileName, qboolean allowPk3s, const ch
 =================
 FS_CheckFilenameIsNotExecutable
 
-ERR_FATAL if trying to maniuplate a file with the platform library extension
+ERR_FATAL if trying to manipulate a file with the platform library extension
 =================
  */
 static void FS_CheckFilenameIsNotAllowed( const char *filename, const char *function, qboolean allowPk3s )
@@ -1417,31 +1417,32 @@ fileHandle_t FS_FOpenFileAppend( const char *filename ) {
 ===========
 FS_FilenameCompare
 
-Ignore case and seprator char distinctions
+Ignore case and separator char distinctions
 ===========
 */
-qboolean FS_FilenameCompare(const char *s1, const char *s2)
-{
-	int c1, c2;
+qboolean FS_FilenameCompare( const char *s1, const char *s2 ) {
+	int		c1, c2;
+	
+	do {
+		c1 = *s1++;
+		c2 = *s2++;
 
-	do
-	{
-		c1 = locase[(byte)*s1++];
-		c2 = locase[(byte)*s2++];
-
-		if (c1 == '\\' || c1 == ':')
+		if ( c1 <= 'Z' && c1 >= 'A' )
+			c1 += ('a' - 'A');
+		else if ( c1 == '\\' || c1 == ':' )
 			c1 = '/';
 
-		if (c2 == '\\' || c2 == ':')
+		if ( c2 <= 'Z' && c2 >= 'A' )
+			c2 += ('a' - 'A');
+		else if ( c2 == '\\' || c2 == ':' )
 			c2 = '/';
 
-		if (c1 != c2)
-		{
-			return qtrue; // strings not equal
+		if ( c1 != c2 ) {
+			return qtrue;		// strings not equal
 		}
-	} while (c1);
-
-	return qfalse; // strings are equal
+	} while ( c1 );
+	
+	return qfalse;		// strings are equal
 }
 
 
@@ -2543,7 +2544,7 @@ qboolean FS_FileIsInPAK( const char *filename, int *pChecksum, char *pakName ) {
 
 			if (fs_filter_flag & FS_EXCLUDE_ETMAIN)
 			{
-				if (!Q_stricmp(search->pack->pakGamename, fs_basegame->string))
+				if (FS_IsBaseGame(search->pack->pakGamename))
 				{
 					continue;
 				}
@@ -2653,7 +2654,7 @@ int FS_ReadFile( const char *qpath, void **buffer ) {
 		if ( buffer ) {
 			*buffer = NULL;
 		}
-		// if we are journalling and it is a config file, write a zero to the journal file
+		// if we are journaling and it is a config file, write a zero to the journal file
 		if ( isConfig ) {
 			Com_DPrintf( "Writing zero for %s to journal file.\n", qpath );
 			len = 0;
@@ -2685,7 +2686,7 @@ int FS_ReadFile( const char *qpath, void **buffer ) {
 	buf[ len ] = '\0';
 	FS_FCloseFile( h );
 
-	// if we are journalling and it is a config file, write it to the journal file
+	// if we are journaling and it is a config file, write it to the journal file
 	if ( isConfig ) {
 		Com_DPrintf( "Writing %s to journal file.\n", qpath );
 		FS_Write( &len, sizeof( len ), com_journalDataFile );
@@ -3153,7 +3154,7 @@ static qboolean FS_LoadPakFromFile( FILE *f )
 	if ( fread( &pk, sizeof( pk ), 1, f ) != 1 )
 		return qfalse; // probably EOF
 
-	/// validate header data
+	// validate header data
 
 	if ( pk.pakNameLen > sizeof( pakName ) || pk.pakNameLen & 3 || pk.pakNameLen == 0 )
 	{
@@ -5281,7 +5282,7 @@ FS_Startup
 ================
 */
 static void FS_Startup( void ) {
-	const char *homePath;
+	const char *homePath, *cdnPath;
 	int i, start, end;
 
 	Com_Printf( "----- FS_Startup -----\n" );
@@ -5292,11 +5293,6 @@ static void FS_Startup( void ) {
 	Cvar_SetDescription( fs_basepath, "Directory to read game installation files from" );
 	fs_basegame = Cvar_Get( "fs_basegame", BASEGAME, CVAR_INIT | CVAR_PROTECTED );
 	Cvar_SetDescription( fs_basegame, "Directory specifying the path to the base game(s) folder(s), separated by '/'" );
-	fs_steampath = Cvar_Get( "fs_steampath", Sys_SteamPath(), CVAR_INIT | CVAR_PROTECTED | CVAR_PRIVATE );
-	fs_gogpath = Cvar_Get( "fs_gogpath", Sys_GogPath(), CVAR_INIT | CVAR_PROTECTED | CVAR_PRIVATE );
-#ifdef _WIN32
-	fs_msstorepath = Cvar_Get( "fs_msstorepath", Sys_MicrosoftStorePath(), CVAR_INIT | CVAR_PROTECTED | CVAR_PRIVATE );
-#endif
 
 	/* parse fs_basegame cvar */
 	if ( basegame_cnt == 0 || Q_stricmp( basegame, fs_basegame->string ) ) {
@@ -5322,7 +5318,25 @@ static void FS_Startup( void ) {
 		" 0 - release after use, unlimited number of pk3 files can be loaded\n"
 		" 1 - keep file handle locked, more consistent, total pk3 files count limited to ~1k-4k\n" );
 #endif
-	
+
+	// Check for Steam, GOG, MSStore duplicate to current basepath so that we don't add twice
+	cdnPath = Sys_SteamPath();
+	if ( cdnPath != NULL && !Q_stricmp( cdnPath, fs_basepath->string ) )
+		cdnPath = "";
+	fs_steampath = Cvar_Get( "fs_steampath", cdnPath, CVAR_INIT | CVAR_PROTECTED | CVAR_PRIVATE );
+
+	cdnPath = Sys_GogPath();
+	if ( cdnPath != NULL && !Q_stricmp( cdnPath, fs_basepath->string ) )
+		cdnPath = "";
+	fs_gogpath = Cvar_Get( "fs_gogpath", cdnPath, CVAR_INIT | CVAR_PROTECTED | CVAR_PRIVATE );
+
+#ifdef _WIN32
+	cdnPath = Sys_MicrosoftStorePath();
+	if ( cdnPath != NULL && !Q_stricmp( cdnPath, fs_basepath->string ) )
+		cdnPath = "";
+	fs_msstorepath = Cvar_Get( "fs_msstorepath", cdnPath, CVAR_INIT | CVAR_PROTECTED | CVAR_PRIVATE );
+#endif
+
 	homePath = Sys_DefaultHomePath();
 	if ( homePath == NULL || homePath[0] == '\0' ) {
 		homePath = fs_basepath->string;

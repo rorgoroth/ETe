@@ -178,6 +178,7 @@ Sys_SteamPath
 const char *Sys_SteamPath( void )
 {
 	static TCHAR steamPath[ MAX_OSPATH ]; // will be converted from TCHAR to ANSI
+	TCHAR *s;
 
 #if defined(STEAMPATH_NAME) || defined(STEAMPATH_APPID)
 	HKEY steamRegKey;
@@ -227,6 +228,12 @@ const char *Sys_SteamPath( void )
 	}
 #endif
 
+	for ( s = steamPath ; *s ; s++ ) {
+		if ( *(char*)s == PATH_SEP_FOREIGN ) {
+			*(char*)s = PATH_SEP;
+		}
+	}
+
 	return (const char*)steamPath;
 }
 
@@ -234,6 +241,40 @@ const char *Sys_SteamPath( void )
 const char *Sys_GogPath( void )
 {
 	static TCHAR gogPath[ MAX_OSPATH ]; // will be converted from TCHAR to ANSI
+	TCHAR *s;
+
+#if defined(STEAMPATH_NAME) || defined(STEAMPATH_APPID)
+	HKEY gogRegKey;
+	DWORD pathLen = MAX_OSPATH;
+#endif
+
+#ifdef GOGPATH_ID
+	if ( !gogPath[0] && RegOpenKeyEx(HKEY_LOCAL_MACHINE, AtoW("SOFTWARE\\GOG.com\\Games\\" GOGPATH_ID), 0, KEY_QUERY_VALUE | KEY_WOW64_32KEY, &gogRegKey ) == ERROR_SUCCESS ) 
+	{
+		pathLen = sizeof( gogPath );
+		if ( RegQueryValueEx( gogRegKey, AtoW("PATH"), NULL, NULL, (LPBYTE)gogPath, &pathLen ) != ERROR_SUCCESS )
+			gogPath[ 0 ] = '\0';
+
+		RegCloseKey( gogRegKey );
+	}
+
+	if ( gogPath[ 0 ] )
+	{
+		if ( pathLen == sizeof( gogPath ) )
+			pathLen--;
+
+		*( ((char*)gogPath) + pathLen )  = '\0';
+#ifdef UNICODE
+		strcpy( (char*)gogPath, WtoA( gogPath ) );
+#endif
+	}
+#endif
+
+	for ( s = gogPath ; *s ; s++ ) {
+		if ( *(char*)s == PATH_SEP_FOREIGN ) {
+			*(char*)s = PATH_SEP;
+		}
+	}
 
 	return (const char*)gogPath;
 }
@@ -246,8 +287,54 @@ const char *Sys_MicrosoftStorePath( void )
 	// C:\Program Files\ModifiableWindowsApps\Wolfenstein Enemy Territory\EN
 	// Use SHGetFolderPathA with CSIDL_PROGRAMFILES to pull the program files directory
 	static TCHAR microsoftStorePath[ MAX_OSPATH ]; // will be converted from TCHAR to ANSI
+	TCHAR *s;
+	DWORD res;
 
-	return (const char*)microsoftStorePath;
+#if defined(WINSTOREPATH_NAME)
+	TCHAR szPath[MAX_PATH];
+	FARPROC qSHGetFolderPath;
+	HMODULE shfolder = LoadLibrary("shfolder.dll");
+	
+	if(shfolder == NULL) {
+		Com_Printf("Unable to load SHFolder.dll\n");
+		return "";
+	}
+
+	qSHGetFolderPath = GetProcAddress(shfolder, "SHGetFolderPathA");
+	if(qSHGetFolderPath == NULL)
+	{
+		Com_Printf("Unable to find SHGetFolderPath in SHFolder.dll\n");
+		FreeLibrary(shfolder);
+		return "";
+	}
+
+	if( !SUCCEEDED( qSHGetFolderPath( NULL, CSIDL_PROGRAM_FILES,
+		NULL, 0, szPath ) ) )
+	{
+		Com_Printf("Unable to detect CSIDL_PROGRAM_FILES\n");
+		FreeLibrary(shfolder);
+		return NULL;
+	}
+	Q_strncpyz( microsoftStorePath, szPath, sizeof(microsoftStorePath) );
+	Q_strcat( microsoftStorePath, sizeof(microsoftStorePath), "\\ModifiableWindowsApps\\" WINSTOREPATH_NAME "\\EN" );
+	FreeLibrary(shfolder);
+#endif
+
+	for ( s = microsoftStorePath ; *s ; s++ ) {
+		if ( *(char*)s == PATH_SEP_FOREIGN ) {
+			*(char*)s = PATH_SEP;
+		}
+	}
+
+	res = GetFileAttributesA( microsoftStorePath );
+
+	if( res != INVALID_FILE_ATTRIBUTES && ( res & FILE_ATTRIBUTE_DIRECTORY ) != 0 ) {
+		return (const char*)microsoftStorePath;
+	}
+	else {
+		memset( microsoftStorePath, 0, sizeof( microsoftStorePath ) );
+		return (const char*)microsoftStorePath;
+	}
 }
 
 
