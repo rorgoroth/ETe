@@ -63,33 +63,33 @@ jobs:
       run: |
         mkdir bin
 
-        msbuild src\win32\msvc2017\ete-ded.vcxproj -m -p:TargetName=ETe.ded,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
+        msbuild src\win32\msvc2017\ete-ded.vcxproj -m -p:PlatformToolset=v143,TargetName=ETe.ded,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
         copy src\win32\msvc2017\output\${{ matrix.config }}\ETe.ded.exe bin\ETe.ded${{ matrix.suffix }}.exe
-        msbuild src\win32\msvc2017\ete-ded.vcxproj -m -p:TargetName=ETe.ded,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
+        msbuild src\win32\msvc2017\ete-ded.vcxproj -m -p:PlatformToolset=v143,TargetName=ETe.ded,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
 
-        msbuild src\win32\msvc2017\renderer.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
-        msbuild src\win32\msvc2017\ete.vcxproj -m -p:TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0
+        msbuild src\win32\msvc2017\renderer.vcxproj -m -p:PlatformToolset=v143,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
+        msbuild src\win32\msvc2017\ete.vcxproj -m -p:PlatformToolset=v143,TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0
         copy src\win32\msvc2017\output\${{ matrix.config }}\ETe.exe bin\ETe${{ matrix.suffix }}.exe
-        msbuild src\win32\msvc2017\renderer.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
-        msbuild src\win32\msvc2017\ete.vcxproj -m -p:TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 -t:Clean
+        msbuild src\win32\msvc2017\renderer.vcxproj -m -p:PlatformToolset=v143,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
+        msbuild src\win32\msvc2017\ete.vcxproj -m -p:PlatformToolset=v143,TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 -t:Clean
 
-        msbuild src\win32\msvc2017\renderervk.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
-        msbuild src\win32\msvc2017\ete.vcxproj -m -p:TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0
+        msbuild src\win32\msvc2017\renderervk.vcxproj -m -p:PlatformToolset=v143,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
+        msbuild src\win32\msvc2017\ete.vcxproj -m -p:PlatformToolset=v143,TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0
         copy src\win32\msvc2017\output\${{ matrix.config }}\ETe.exe bin\ETe-vulkan${{ matrix.suffix }}.exe
-        msbuild src\win32\msvc2017\renderervk.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
-        msbuild src\win32\msvc2017\ete.vcxproj -m -p:TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 -t:Clean
+        msbuild src\win32\msvc2017\renderervk.vcxproj -m -p:PlatformToolset=v143,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
+        msbuild src\win32\msvc2017\ete.vcxproj -m -p:PlatformToolset=v143,TargetName=ETe,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }},UseWasapi=USE_WASAPI=0 -t:Clean
 
-        msbuild src\win32\msvc2017\game.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
-        msbuild src\win32\msvc2017\ui.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
-        msbuild src\win32\msvc2017\cgame.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
+        msbuild src\win32\msvc2017\game.vcxproj -m -p:PlatformToolset=v143,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
+        msbuild src\win32\msvc2017\ui.vcxproj -m -p:PlatformToolset=v143,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
+        msbuild src\win32\msvc2017\cgame.vcxproj -m -p:PlatformToolset=v143,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }}
 
         copy src\win32\msvc2017\output\${{ matrix.config }}\qagame_mp_${{ matrix.pkg_suffix }}.dll bin\
         copy src\win32\msvc2017\output\${{ matrix.config }}\ui_mp_${{ matrix.pkg_suffix }}.dll bin\
         copy src\win32\msvc2017\output\${{ matrix.config }}\cgame_mp_${{ matrix.pkg_suffix }}.dll bin\
 
-        msbuild src\win32\msvc2017\game.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
-        msbuild src\win32\msvc2017\ui.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
-        msbuild src\win32\msvc2017\cgame.vcxproj -m -p:Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
+        msbuild src\win32\msvc2017\game.vcxproj -m -p:PlatformToolset=v143,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
+        msbuild src\win32\msvc2017\ui.vcxproj -m -p:PlatformToolset=v143,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
+        msbuild src\win32\msvc2017\cgame.vcxproj -m -p:PlatformToolset=v143,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
 
     - uses: actions/upload-artifact@v4
       if: ${{ matrix.config == 'Release' }}
