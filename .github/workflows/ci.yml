@@ -22,7 +22,7 @@ on:
 jobs:
   msvc:
     name: Windows ${{ matrix.arch }} ${{ matrix.config }} 
-    runs-on: windows-2019
+    runs-on: windows-2022
     strategy:
       fail-fast: false
       matrix:
