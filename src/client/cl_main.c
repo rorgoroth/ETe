@@ -1277,7 +1277,7 @@ static void CL_GenerateETKey(void)
 		srand(Sys_Milliseconds());
 		last = rand() % 9999;
 
-		Com_sprintf(buff, sizeof(buff), "0000001002%04i%02i%02i%02i%02i%02i%03i", t->tm_year, t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, last);
+		Com_sprintf(buff, sizeof(buff), "0000001002%04i%02i%02i%02i%02i%02i%03i", t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, last);
 
 		f = FS_SV_FOpenFileWrite(BASEGAME "/" ETKEY_FILE);
 		if (f == FS_INVALID_HANDLE)
