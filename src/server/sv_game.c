@@ -441,6 +441,11 @@ static qboolean SV_G_GetValue( char* value, int valueSize, const char* key )
 		return qtrue;
 	}
 
+	if ( !Q_stricmp( key, "CVAR_DEVELOPER_ETE" ) ) {
+		Com_sprintf( value, valueSize, "%i", CVAR_DEVELOPER );
+		return qtrue;
+	}
+
 	return qfalse;
 }
 
