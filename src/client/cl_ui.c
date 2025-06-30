@@ -832,6 +832,21 @@ static qboolean CL_UI_GetValue( char* value, int valueSize, const char* key ) {
 		return qtrue;
 	}
 
+	if ( !Q_stricmp( key, "CVAR_NOTABCOMPLETE_ETE" ) ) {
+		Com_sprintf( value, valueSize, "%i", CVAR_NOTABCOMPLETE );
+		return qtrue;
+	}
+
+	if ( !Q_stricmp( key, "CVAR_NODEFAULT_ETE" ) ) {
+		Com_sprintf( value, valueSize, "%i", CVAR_NODEFAULT );
+		return qtrue;
+	}
+
+	if ( !Q_stricmp( key, "CVAR_ARCHIVE_ND_ETE" ) ) {
+		Com_sprintf( value, valueSize, "%i", CVAR_ARCHIVE_ND );
+		return qtrue;
+	}
+
 	return qfalse;
 }
 
