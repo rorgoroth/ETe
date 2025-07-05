@@ -547,6 +547,7 @@ void SV_SpawnServer( const char *mapname ) {
 	qboolean	isBot;
 	const char	*p, *pnames;
 	char		bspname[MAX_QPATH];
+	int			pakChecksum = 0; // checksum of pk3 map is in
 
 	// ydnar: broadcast a level change to all connected clients
 	if ( svs.clients && !com_errorEntered ) {
@@ -676,6 +677,8 @@ void SV_SpawnServer( const char *mapname ) {
 	Cvar_Set( "mapname", mapname );
 
 	Cvar_Set( "sv_mapChecksum", va( "%i",checksum ) );
+	FS_FileIsInPAK( bspname, &pakChecksum, NULL );
+	Cvar_Set( "sv_currentPak", va( "%d", pakChecksum ) );
 
 	// serverid should be different each time
 	sv.serverId = com_frameTime;
@@ -779,6 +782,12 @@ void SV_SpawnServer( const char *mapname ) {
 		SV_TouchDLLFile( "ui" );
 		// rebuild referenced paks list
 		p = FS_ReferencedPakNames( NULL );
+	}
+	if( sv_pure->integer == 0 ) {
+		int cgameChksum = 0, uiChksum = 0;
+		FS_FileIsInPAK( SYS_DLLNAME_CGAME, &cgameChksum, NULL );
+		FS_FileIsInPAK( SYS_DLLNAME_UI, &uiChksum, NULL );
+		Cvar_Set( "sv_clientPaks", va("%d %d", cgameChksum, uiChksum) );
 	}
 	Cvar_Set( "sv_referencedPakNames", p );
 
@@ -950,6 +959,8 @@ void SV_Init( void )
 	Cvar_Get( "sv_referencedPaks", "", CVAR_SYSTEMINFO | CVAR_ROM );
 	sv_referencedPakNames = Cvar_Get( "sv_referencedPakNames", "", CVAR_SYSTEMINFO | CVAR_ROM );
 	Cvar_SetDescription( sv_referencedPakNames, "Variable holds a list of all the pk3 files the server loaded data from" );
+	Cvar_Get( "sv_currentPak", "0", CVAR_SERVERINFO | CVAR_ROM );
+	Cvar_Get( "sv_clientPaks", "0 0", CVAR_SERVERINFO | CVAR_ROM );
 
 	// server vars
 	sv_rconPassword = Cvar_Get( "rconPassword", "", CVAR_TEMP );
@@ -1188,6 +1199,10 @@ void SV_Shutdown( const char *finalmsg ) {
 	Cvar_Set( "sv_referencedPakNames", "" );
 	Cvar_Set( "sv_mapChecksum", "" );
 	Cvar_Set( "sv_serverid", "0" );
+	Cvar_Set( "sv_paks", "" );
+	Cvar_Set( "sv_pakNames", "" );
+	Cvar_Set( "sv_currentPak", "0" );
+	Cvar_Set( "sv_clientPaks", "0 0" );
 
 	Sys_SetStatus( "Server is not running" );
 }
