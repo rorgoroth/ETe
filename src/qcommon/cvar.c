@@ -183,6 +183,14 @@ void Cvar_VariableStringBuffer( const char *var_name, char *buffer, int bufsize 
 	}
 }
 
+#ifdef _WIN32
+#define CVAR_VERSION_STR "ET 2.60b win-x86 May  8 2006"
+#elif defined(__APPLE__) || defined(__APPLE_CC__)
+#define CVAR_VERSION_STR "ET 2.60d OSX-universal JAN 20 2007"
+#else
+#define CVAR_VERSION_STR "ET 2.60b linux-i386 May  8 2006"
+#endif
+
 
 /*
 ============
@@ -191,6 +199,11 @@ Cvar_VariableStringBufferSafe
 */
 void Cvar_VariableStringBufferSafe( const char *var_name, char *buffer, int bufsize, int flag ) {
 	cvar_t *var;
+
+	if( currentGameMod == GAMEMOD_NOQUARTER && !Q_stricmp( var_name, "version" ) ) {
+		Q_strncpyz( buffer, CVAR_VERSION_STR, bufsize );
+		return;
+	}
 	
 	var = Cvar_FindVar( var_name );
 	if ( !var || (var->flags & flag) ) {
