@@ -46,6 +46,10 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    - name: Sleep for 30 seconds
+      run: Start-Sleep -s 30
+      shell: powershell
+
     - name: upload_packages
       id: upload_release
       uses: svenstaro/upload-release-action@latest
