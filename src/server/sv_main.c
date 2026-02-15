@@ -1095,7 +1095,8 @@ static void SVC_RemoteCommand( const netadr_t *from ) {
 	// TTimo - scaled down to accumulate, but not overflow anything network wise, print wise etc.
 	// (OOB messages are the bottleneck here)
 	char		sv_outputbuf[1024 - 16];
-	const char	*cmd_aux, *pw;
+	const char	*pw;
+	char		*cmd_aux, cmd_copy[BIG_INFO_STRING];
 
 	// Prevent using rcon as an amplifier and make dictionary attacks impractical
 	if ( SVC_RateLimitAddress( from, 10, 1000 ) ) {
@@ -1135,7 +1136,8 @@ static void SVC_RemoteCommand( const netadr_t *from ) {
 		// get the command directly, "rcon <pass> <command>" to avoid quoting issues
 		// extract the command by walking
 		// since the cmd formatting can fuckup (amount of spaces), using a dumb step by step parsing
-		cmd_aux = Cmd_Cmd();
+		Q_strncpyz( cmd_copy, Cmd_Cmd(), sizeof( cmd_copy ) );
+		cmd_aux = cmd_copy;
 		while ( *cmd_aux && *cmd_aux <= ' ' ) // skip whitespace
 			cmd_aux++;
 		cmd_aux += 4; // "rcon"
