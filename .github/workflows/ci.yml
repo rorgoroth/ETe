@@ -156,52 +156,52 @@ jobs:
         if-no-files-found: error
         retention-days: 5
 
-  macos:
-    name: macOS ${{ matrix.arch }} ${{ matrix.config }}
-    runs-on: ${{ matrix.runner }}
-    strategy:
-      fail-fast: false
-      matrix:
-        runner: [macos-13] #, macos-14]
-        config: [Release]
-        include:
-          - runner: macos-13
-            arch: x86_64
-          #- runner: macos-14
-          #  arch: arm64
-          - config: Release
-            rule: install
-
-    steps:
-    - name: Setup Build Environment
-      run: brew install coreutils ninja sdl2
-
-    - uses: actions/checkout@v4
-      with:
-        submodules: recursive
-
-    - name: Configure CMake
-      run: |
-        cmake -E make_directory bin
-        cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=TRUE -DBUILD_ETMAIN_MOD=ON -DUSE_SYSTEM_JPEG=OFF
-
-    - name: Build
-      working-directory: bin
-      run: cmake --build . --config ${{ matrix.config }} --parallel
-
-    - uses: actions/upload-artifact@v4
-      if: matrix.config == 'Release'
-      with:
-        name: macos-${{ matrix.arch }}
-        path: |
-          bin/ete*.${{ matrix.arch }}
-          bin/*_mac
-        if-no-files-found: error
-        retention-days: 5
+  #macos:
+  #  name: macOS ${{ matrix.arch }} ${{ matrix.config }}
+  #  runs-on: ${{ matrix.runner }}
+  #  strategy:
+  #    fail-fast: false
+  #    matrix:
+  #      runner: [macos-13] #, macos-14]
+  #      config: [Release]
+  #      include:
+  #        - runner: macos-13
+  #          arch: x86_64
+  #        #- runner: macos-14
+  #        #  arch: arm64
+  #        - config: Release
+  #          rule: install
+  #
+  #  steps:
+  #  - name: Setup Build Environment
+  #    run: brew install coreutils ninja sdl2
+  #
+  #  - uses: actions/checkout@v4
+  #    with:
+  #      submodules: recursive
+  #
+  #  - name: Configure CMake
+  #    run: |
+  #      cmake -E make_directory bin
+  #      cmake -S src -B bin -G "Ninja" -DCMAKE_BUILD_TYPE=${{ matrix.config }} -DUSE_SDL2=TRUE -DBUILD_ETMAIN_MOD=ON -DUSE_SYSTEM_JPEG=OFF
+  #
+  #  - name: Build
+  #    working-directory: bin
+  #    run: cmake --build . --config ${{ matrix.config }} --parallel
+  #
+  #  - uses: actions/upload-artifact@v4
+  #    if: matrix.config == 'Release'
+  #    with:
+  #      name: macos-${{ matrix.arch }}
+  #      path: |
+  #        bin/ete*.${{ matrix.arch }}
+  #        bin/*_mac
+  #      if-no-files-found: error
+  #      retention-days: 5
 
   create-testing:
     if: github.ref == 'refs/heads/master' && github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-    needs: [msvc, ubuntu, macos]
+    needs: [msvc, ubuntu] #, macos]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -217,30 +217,30 @@ jobs:
           7z a -r ete-linux-x86_64.zip         ./linux-x86_64/* -x!*.so
           7z a -r ete-windows-msvc-x86.zip     ./windows-x86/* -x!*.dll
           7z a -r ete-windows-msvc-x64.zip     ./windows-x64/* -x!*.dll
-          7z a -r ete-macos-x86_64.zip         ./macos-x86_64/* -x!*_mac
+          #7z a -r ete-macos-x86_64.zip         ./macos-x86_64/* -x!*_mac
           7z a -r ete-linux-x86.zip            ./steam/steam_appid.txt
           7z a -r ete-linux-x86_64.zip         ./steam/steam_appid.txt
           7z a -r ete-windows-msvc-x86.zip     ./steam/steam_appid.txt
           7z a -r ete-windows-msvc-x64.zip     ./steam/steam_appid.txt
-          7z a -r ete-macos-x86_64.zip         ./steam/steam_appid.txt
+          #7z a -r ete-macos-x86_64.zip         ./steam/steam_appid.txt
           mkdir -p etmain
           mv -t  ./etmain/ ./linux-x86/*.so
           mv -t  ./etmain/ ./linux-x86_64/*.so
           mv -t  ./etmain/ ./windows-x86/*.dll
           mv -t  ./etmain/ ./windows-x64/*.dll
-          mv -t  ./etmain/ ./macos-x86_64/*_mac
+          #mv -t  ./etmain/ ./macos-x86_64/*_mac
           cd etmain
           7z a -r -tzip mp_bina.pk3      ./cgame*.so
           7z a -r -tzip mp_bina.pk3      ./ui*.so
           7z a -r -tzip mp_bina.pk3      ./cgame*.dll
           7z a -r -tzip mp_bina.pk3      ./ui*.dll
-          7z a -r -tzip mp_bina.pk3      ./cgame_mac
-          7z a -r -tzip mp_bina.pk3      ./ui_mac
+          #7z a -r -tzip mp_bina.pk3      ./cgame_mac
+          #7z a -r -tzip mp_bina.pk3      ./ui_mac
           cd ..
           7z a -r ete-etmain-mod-replacement-allplatform.zip      ./etmain/*.pk3
           7z a -r ete-etmain-mod-replacement-allplatform.zip      ./etmain/*.so
           7z a -r ete-etmain-mod-replacement-allplatform.zip      ./etmain/*.dll
-          7z a -r ete-etmain-mod-replacement-allplatform.zip      ./etmain/*_mac
+          #7z a -r ete-etmain-mod-replacement-allplatform.zip      ./etmain/*_mac
 
       - name: Create Client Hashes
         run: |
@@ -256,8 +256,8 @@ jobs:
           sha1sum ./windows-x86/ETe-vulkan.exe > ETe-vulkan.exe.sha1
           md5sum ./windows-x64/ETe-vulkan.x64.exe > ETe-vulkan.x64.exe.md5
           sha1sum ./windows-x64/ETe-vulkan.x64.exe > ETe-vulkan.x64.exe.sha1
-          md5sum ./macos-x86_64/ete.x86_64 > ete_mac.x86_64.md5
-          sha1sum ./macos-x86_64/ete.x86_64 > ete_mac.x86_64.sha1
+          #md5sum ./macos-x86_64/ete.x86_64 > ete_mac.x86_64.md5
+          #sha1sum ./macos-x86_64/ete.x86_64 > ete_mac.x86_64.sha1
           7z a -r ete-client-hashes.zip *.md5 *.sha1
 
 #TODO other builds
