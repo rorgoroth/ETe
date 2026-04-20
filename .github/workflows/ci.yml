@@ -39,7 +39,7 @@ jobs:
             pkg_suffix: x64
 
     steps:
-    - uses: microsoft/setup-msbuild@v2
+    - uses: microsoft/setup-msbuild@v3
 
     #- name: Install v141_xp Toolset
     #  shell: powershell
@@ -55,7 +55,7 @@ jobs:
     #        Write-Host "components were not installed"
     #    }
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: recursive
 
@@ -91,7 +91,7 @@ jobs:
         msbuild src\win32\msvc2017\ui.vcxproj -m -p:PlatformToolset=v143,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
         msbuild src\win32\msvc2017\cgame.vcxproj -m -p:PlatformToolset=v143,Configuration=${{ matrix.config }},Platform=${{ matrix.platform }} -t:Clean
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: ${{ matrix.config == 'Release' }}
       with:
         name: windows-${{ matrix.pkg_suffix }}
@@ -129,7 +129,7 @@ jobs:
           sudo apt-get -qq update
           sudo apt-get -y install ninja-build libjpeg-dev libsdl2-dev libcurl4-openssl-dev
         fi
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: recursive
 
@@ -146,7 +146,7 @@ jobs:
       working-directory: bin
       run: cmake --build . --config ${{ matrix.config }} --parallel
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: matrix.config == 'Release'
       with:
         name: linux-${{ matrix.arch }}
@@ -176,7 +176,7 @@ jobs:
   #  - name: Setup Build Environment
   #    run: brew install coreutils ninja sdl2
   #
-  #  - uses: actions/checkout@v4
+  #  - uses: actions/checkout@v7
   #    with:
   #      submodules: recursive
   #
@@ -189,7 +189,7 @@ jobs:
   #    working-directory: bin
   #    run: cmake --build . --config ${{ matrix.config }} --parallel
   #
-  #  - uses: actions/upload-artifact@v4
+  #  - uses: actions/upload-artifact@v7
   #    if: matrix.config == 'Release'
   #    with:
   #      name: macos-${{ matrix.arch }}
@@ -204,12 +204,12 @@ jobs:
     needs: [msvc, ubuntu] #, macos]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: recursive
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
 
       - name: Create binary archives
         run: |
