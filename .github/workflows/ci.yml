@@ -55,7 +55,7 @@ jobs:
     #        Write-Host "components were not installed"
     #    }
 
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@v6
       with:
         submodules: recursive
 
@@ -129,7 +129,7 @@ jobs:
           sudo apt-get -qq update
           sudo apt-get -y install ninja-build libjpeg-dev libsdl2-dev libcurl4-openssl-dev
         fi
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@v6
       with:
         submodules: recursive
 
@@ -176,7 +176,7 @@ jobs:
   #  - name: Setup Build Environment
   #    run: brew install coreutils ninja sdl2
   #
-  #  - uses: actions/checkout@v7
+  #  - uses: actions/checkout@v6
   #    with:
   #      submodules: recursive
   #
@@ -204,7 +204,7 @@ jobs:
     needs: [msvc, ubuntu] #, macos]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v6
         with:
           submodules: recursive
 
